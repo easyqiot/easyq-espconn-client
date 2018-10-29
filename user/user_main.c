@@ -2,7 +2,6 @@
 #include "driver/uart.h"
 #include "osapi.h"
 #include "wifi.h"
-#include "config.h"
 #include "debug.h"
 #include "gpio.h"
 #include "user_interface.h"
@@ -95,9 +94,7 @@ void user_init(void)
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
     os_delay_us(60000);
 
-    CFG_Load();
-
-    WIFI_Connect(sysCfg.sta_ssid, sysCfg.sta_pwd, wifiConnectCb);
+    WIFI_Connect("yana", "himopolooK905602", wifiConnectCb);
 
     INFO("\r\nSystem started ...\r\n");
 }
