@@ -45,7 +45,15 @@ compile options: 1 1 2 0 5, or others if you are familar to it.
 
 Any way is OK,such as:
 ```
-$~/esp/esp-idf/components/esptool_py/esptool/esptool.py --port /dev/ttyUSB0 --baud 921600 write_flash 0x00000 ~/ESP8266_NONOS_SDK/bin/boot_v1.6.bin 0x1000 ../bin/upgrade/user1.2048.new.5.bin 0x1fe000 ~/ESP8266_NONOS_SDK/bin/blank.bin 0x1fc000 ~/ESP8266_NONOS_SDK/bin/esp_init_data_default.bin
+$~/esp/esp-idf/components/esptool_py/esptool/esptool.py \
+    --port /dev/ttyUSB0 \
+    --baud 921600 \
+    write_flash 
+        0x00000 ../bin/boot_v1.6.bin \
+        0x1000 ../bin/upgrade/user1.1024.new.5.bin \
+        0xfb000 ../bin/blank.bin \
+        0xfc000 ../bin/esp_init_data_default.bin
+        0xfe000 ../bin/blank.bin \
 ```
 
 ### Step 6(optional): Flash your certificate

@@ -9,38 +9,12 @@
 
 #include "sntp.h"
 
-#if ((SPI_FLASH_SIZE_MAP == 0) || (SPI_FLASH_SIZE_MAP == 1))
-#error "The flash map is not supported"
-#elif (SPI_FLASH_SIZE_MAP == 2)
+#if (SPI_FLASH_SIZE_MAP == 2)
 #define SYSTEM_PARTITION_OTA_SIZE							0x6A000
 #define SYSTEM_PARTITION_OTA_2_ADDR							0x81000
 #define SYSTEM_PARTITION_RF_CAL_ADDR						0xfb000
 #define SYSTEM_PARTITION_PHY_DATA_ADDR						0xfc000
 #define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR				0xfd000
-#elif (SPI_FLASH_SIZE_MAP == 3)
-#define SYSTEM_PARTITION_OTA_SIZE							0x6A000
-#define SYSTEM_PARTITION_OTA_2_ADDR							0x81000
-#define SYSTEM_PARTITION_RF_CAL_ADDR						0x1fb000
-#define SYSTEM_PARTITION_PHY_DATA_ADDR						0x1fc000
-#define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR				0x1fd000
-#elif (SPI_FLASH_SIZE_MAP == 4)
-#define SYSTEM_PARTITION_OTA_SIZE							0x6A000
-#define SYSTEM_PARTITION_OTA_2_ADDR							0x81000
-#define SYSTEM_PARTITION_RF_CAL_ADDR						0x3fb000
-#define SYSTEM_PARTITION_PHY_DATA_ADDR						0x3fc000
-#define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR				0x3fd000
-#elif (SPI_FLASH_SIZE_MAP == 5)
-#define SYSTEM_PARTITION_OTA_SIZE							0x6A000
-#define SYSTEM_PARTITION_OTA_2_ADDR							0x101000
-#define SYSTEM_PARTITION_RF_CAL_ADDR						0x1fb000
-#define SYSTEM_PARTITION_PHY_DATA_ADDR						0x1fc000
-#define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR				0x1fd000
-#elif (SPI_FLASH_SIZE_MAP == 6)
-#define SYSTEM_PARTITION_OTA_SIZE							0x6A000
-#define SYSTEM_PARTITION_OTA_2_ADDR							0x101000
-#define SYSTEM_PARTITION_RF_CAL_ADDR						0x3fb000
-#define SYSTEM_PARTITION_PHY_DATA_ADDR						0x3fc000
-#define SYSTEM_PARTITION_SYSTEM_PARAMETER_ADDR				0x3fd000
 #else
 #error "The flash map is not supported"
 #endif
@@ -54,9 +28,9 @@ void sntpfn()
     ts = sntp_get_current_timestamp();
     os_printf("current time : %s\n", sntp_get_real_time(ts));
     if (ts == 0) {
-        //os_printf("did not get a valid time from sntp server\n");
+        os_printf("did not get a valid time from sntp server\n");
     } else {
-            os_timer_disarm(&sntp_timer);
+        os_timer_disarm(&sntp_timer);
     }
 }
 
@@ -83,7 +57,10 @@ static const partition_item_t at_partition_table[] = {
 
 void ICACHE_FLASH_ATTR user_pre_init(void)
 {
-    if(!system_partition_table_regist(at_partition_table, sizeof(at_partition_table)/sizeof(at_partition_table[0]),SPI_FLASH_SIZE_MAP)) {
+    if(!system_partition_table_regist(
+				at_partition_table, 
+				sizeof(at_partition_table)/sizeof(at_partition_table[0]),
+				SPI_FLASH_SIZE_MAP)) {
 		os_printf("system_partition_table_regist fail\r\n");
 		while(1);
 	}
@@ -95,6 +72,5 @@ void user_init(void)
     os_delay_us(60000);
 
     WIFI_Connect("yana", "himopolooK905602", wifiConnectCb);
-
     INFO("\r\nSystem started ...\r\n");
 }

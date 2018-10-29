@@ -1,9 +1,3 @@
-/*
- * wifi.c
- *
- *  Created on: Dec 30, 2014
- *      Author: Minh
- */
 #include "wifi.h"
 #include "user_interface.h"
 #include "osapi.h"
