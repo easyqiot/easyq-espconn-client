@@ -17,41 +17,25 @@ static void ICACHE_FLASH_ATTR wifi_check_ip(void *arg)
 	os_timer_disarm(&WiFiLinker);
 	wifi_get_ip_info(STATION_IF, &ipConfig);
 	wifiStatus = wifi_station_get_connect_status();
-	if (wifiStatus == STATION_GOT_IP && ipConfig.ip.addr != 0)
-	{
-
+	if (wifiStatus == STATION_GOT_IP && ipConfig.ip.addr != 0) {
 		os_timer_setfn(&WiFiLinker, (os_timer_func_t *)wifi_check_ip, NULL);
 		os_timer_arm(&WiFiLinker, 2000, 0);
-
-
 	}
 	else
 	{
-		if(wifi_station_get_connect_status() == STATION_WRONG_PASSWORD)
-		{
-
+		if(wifi_station_get_connect_status() == STATION_WRONG_PASSWORD) {
 			INFO("STATION_WRONG_PASSWORD\r\n");
 			wifi_station_connect();
-
-
 		}
-		else if(wifi_station_get_connect_status() == STATION_NO_AP_FOUND)
-		{
-
+		else if(wifi_station_get_connect_status() == STATION_NO_AP_FOUND) {
 			INFO("STATION_NO_AP_FOUND\r\n");
 			wifi_station_connect();
-
-
 		}
-		else if(wifi_station_get_connect_status() == STATION_CONNECT_FAIL)
-		{
-
+		else if(wifi_station_get_connect_status() == STATION_CONNECT_FAIL) {
 			INFO("STATION_CONNECT_FAIL\r\n");
 			wifi_station_connect();
-
 		}
-		else
-		{
+		else {
 			INFO("STATION_IDLE\r\n");
 		}
 
