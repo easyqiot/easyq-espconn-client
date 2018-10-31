@@ -59,7 +59,7 @@ void easyq_callback(EasyQStatus status) {
 void easyq_task() {
 	if (eq->tcpconn == NULL) {
 		INFO("Not connected, Connecting...\r\n");
-		easyq_connect(eq, "192.168.8.44", 1085, easyq_callback);
+		easyq_connect(eq, easyq_callback);
 	} else {
 		INFO("Nothing to do\r\n");
 	}
@@ -80,8 +80,7 @@ void user_init(void)
 {
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
     os_delay_us(60000);
-	eq = os_malloc(sizeof(EasyQSession));
-
+	easyq_init(eq, "192.168.8.44", 1085);
     WIFI_Connect("yana", "himopolooK905602", wifiConnectCb);
     INFO("\r\nSystem started ...\r\n");
 }
