@@ -57,11 +57,17 @@ void easyq_callback(EasyQStatus status) {
 
 
 void easyq_task() {
-	if (eq->tcpconn == NULL) {
+	if (eq == NULL) {
+		eq = easyq_init("192.168.8.44", 1085);
+		//INFO("%s\r\n", eq->hostname);
+		//INFO("%d\r\n", eq->port);
+	}
+	else if (eq->tcpconn == NULL) {
 		INFO("Not connected, Connecting...\r\n");
 		easyq_connect(eq, easyq_callback);
 	} else {
-		INFO("Nothing to do\r\n");
+		uint32_t free = system_get_free_heap_size();
+		INFO("Nothing to do: free mem: %d\r\n", free);
 	}
 }
 
@@ -80,7 +86,6 @@ void user_init(void)
 {
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
     os_delay_us(60000);
-	easyq_init(eq, "192.168.8.44", 1085);
-    WIFI_Connect("yana", "himopolooK905602", wifiConnectCb);
+    WIFI_Connect("Jigoodi", "himopolooK905602", wifiConnectCb);
     INFO("\r\nSystem started ...\r\n");
 }

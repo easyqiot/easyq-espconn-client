@@ -24,7 +24,7 @@ typedef void (*EasyQCallback)(EasyQStatus status);
 
 void ICACHE_FLASH_ATTR easyq_connect(EasyQSession *eq, EasyQCallback callback); 
 
-void ICACHE_FLASH_ATTR easyq_init(EasyQSession *eq, const char *hostname, 
+EasyQSession * ICACHE_FLASH_ATTR easyq_init(const char *hostname, 
 		uint16_t port);
 
 #endif
