@@ -31,41 +31,6 @@ easyq_delete(EasyQSession *eq)
 }
 
 
-
-void ICACHE_FLASH_ATTR
-easyq_task(os_event_t *e)
-{
-    EasyQSession* eq = (EasyQSession*)e->par;
-    uint8_t dataBuffer[EASYQ_BUF_SIZE];
-    uint16_t dataLen;
-    if (e->par == 0)
-        return;
-    switch (eq->status) {
-
-    case EASYQ_RECONNECT_REQ:
-        break;
-    case EASYQ_RECONNECT:
-        easyq_tcpconn_delete(eq);
-        easyq_connect(eq);
-        INFO("TCP: Reconnect to: %s:%d\r\n", eq->hostname, eq->port);
-        eq->status = EASYQ_CONNECTING;
-        break;
-    case EASYQ_DELETING:
-    case EASYQ_DISCONNECTING:
-    case EASYQ_RECONNECT_DISCONNECTING:
-        espconn_disconnect(eq->tcpconn);
-        break;
-    case EASYQ_DISCONNECTED:
-        INFO("EASYQ: Disconnected\r\n");
-        easyq_tcpconn_delete(eq);
-        break;
-    case EASYQ_DELETED:
-        INFO("EASYQ: Deleted client\r\n"); 
-		easyq_delete(eq);
-        break;
-    }
-}
-
 void ICACHE_FLASH_ATTR
 easyq_tcpclient_disconnect_cb(void *arg)
 {
@@ -95,6 +60,7 @@ easyq_tcpclient_connect_cb(void *arg)
 	eq->status = EASYQ_CONNECTED;
 	espconn_regist_disconcb(eq->tcpconn, easyq_tcpclient_disconnect_cb);
     INFO("TCP: Connected to %s:%d\r\n", eq->hostname, eq->port);
+    system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
 }
 
 
@@ -105,19 +71,6 @@ easyq_tcpclient_recon_cb(void *arg, sint8 errType)
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
     INFO("TCP: Reconnect to %s:%d\r\n", eq->hostname, eq->port);
 	eq->status = EASYQ_RECONNECT_REQ;
-}
-
-
-void ICACHE_FLASH_ATTR easyq_timer(void *arg)
-{
-    EasyQSession* eq = (EasyQSession*)arg;
-	if (eq->status == EASYQ_RECONNECT_REQ) {
-        eq->status = EASYQ_RECONNECT;
-        system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
-    }
-	else { 
-		INFO("Nothing to do");
-	}
 }
 
 
@@ -152,6 +105,19 @@ easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
 }
 
 
+void ICACHE_FLASH_ATTR easyq_timer(void *arg)
+{
+    EasyQSession* eq = (EasyQSession*)arg;
+	if (eq->status == EASYQ_RECONNECT_REQ) {
+        eq->status = EASYQ_RECONNECT;
+        system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
+    }
+	else { 
+		INFO("Nothing to do\r\n");
+	}
+}
+
+
 void ICACHE_FLASH_ATTR easyq_connect(EasyQSession *eq) {
 	eq->status = EASYQ_CONNECTING;
 	if (eq->tcpconn) {
@@ -181,6 +147,43 @@ void ICACHE_FLASH_ATTR easyq_connect(EasyQSession *eq) {
     }
 }
 
+
+void ICACHE_FLASH_ATTR
+easyq_task(os_event_t *e)
+{
+    EasyQSession* eq = (EasyQSession*)e->par;
+    uint8_t dataBuffer[EASYQ_BUF_SIZE];
+    uint16_t dataLen;
+    if (e->par == 0)
+        return;
+    switch (eq->status) {
+		case EASYQ_IDLE:
+			INFO("EasyQ IDLE\r\n");
+	    case EASYQ_RECONNECT_REQ:
+	        break;
+	    case EASYQ_RECONNECT:
+	        easyq_tcpconn_delete(eq);
+	        easyq_connect(eq);
+	        INFO("TCP: Reconnect to: %s:%d\r\n", eq->hostname, eq->port);
+	        eq->status = EASYQ_CONNECTING;
+	        break;
+	    case EASYQ_DELETING:
+	    case EASYQ_DISCONNECTING:
+	    case EASYQ_RECONNECT_DISCONNECTING:
+	        espconn_disconnect(eq->tcpconn);
+	        break;
+	    case EASYQ_DISCONNECTED:
+	        INFO("EASYQ: Disconnected\r\n");
+	        easyq_tcpconn_delete(eq);
+	        break;
+	    case EASYQ_DELETED:
+	        INFO("EASYQ: Deleted client\r\n"); 
+			easyq_delete(eq);
+	        break;
+	    }
+}
+
+
 void ICACHE_FLASH_ATTR
 easyq_disconnect(EasyQSession *eq)
 {
@@ -190,7 +193,6 @@ easyq_disconnect(EasyQSession *eq)
 }
 
 
-
 void ICACHE_FLASH_ATTR easyq_init(EasyQSession * eq, const char *hostname, 
 		uint16_t port) {
 	size_t hostname_len = os_strlen(hostname);
@@ -198,7 +200,8 @@ void ICACHE_FLASH_ATTR easyq_init(EasyQSession * eq, const char *hostname,
 	os_strcpy(eq->hostname, hostname);
 	eq->hostname[hostname_len] = '\0';
 	eq->port = port;
-	INFO("EasyQ Server: %s:%d\r\n", hostname, port);
+	eq->status = EASYQ_IDLE;
+	INFO("Preparing EasyQ Server: %s:%d\r\n", hostname, port);
 
     //QUEUE_Init(&eq->message_queue, QUEUE_BUFFER_SIZE);
 
