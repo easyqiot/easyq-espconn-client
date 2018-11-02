@@ -7,4 +7,6 @@
 #define INFO( format, ... )
 #endif
 
+#define ERROR( format, ... ) os_printf( format, ## __VA_ARGS__ )
+#define FATAL( format, ... ) os_printf( format, ## __VA_ARGS__ )
 #endif /* USER_DEBUG_H_ */

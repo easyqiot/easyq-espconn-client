@@ -18,6 +18,7 @@ typedef struct easy_session {
 	struct espconn *tcpconn;
 	char *hostname;
 	uint16_t port;
+	EasyQStatus status;
 } EasyQSession;
 
 typedef void (*EasyQCallback)(EasyQStatus status);

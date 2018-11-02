@@ -34,58 +34,77 @@ void ICACHE_FLASH_ATTR user_pre_init(void)
 				at_partition_table, 
 				sizeof(at_partition_table)/sizeof(at_partition_table[0]),
 				SPI_FLASH_SIZE_MAP)) {
-		os_printf("system_partition_table_regist fail\r\n");
+		FATAL("system_partition_table_regist fail\r\n");
 		while(1);
 	}
 }
 
 
-static ETSTimer eq_timer;
-static EasyQSession *eq;
+EasyQSession eq;
+static ETSTimer sntp_timer;
 
-
-void easyq_callback(EasyQStatus status) {
-	switch (status) {
-		case EASYQ_CONNECTING:
-			INFO("EasyQ connecting.\r\n");
-		case EASYQ_CONNECTED:
-			INFO("EasyQ connected.\r\n");
-		case EASYQ_IDLE:
-			INFO("EasyQ Idle.\r\n");
-	}
-}
-
-
-void easyq_task() {
-	if (eq == NULL) {
-		eq = easyq_init("192.168.8.44", 1085);
-		//INFO("%s\r\n", eq->hostname);
-		//INFO("%d\r\n", eq->port);
-	}
-	else if (eq->tcpconn == NULL) {
-		INFO("Not connected, Connecting...\r\n");
-		easyq_connect(eq, easyq_callback);
-	} else {
-		uint32_t free = system_get_free_heap_size();
-		INFO("Nothing to do: free mem: %d\r\n", free);
-	}
+void sntpfn()
+{
+    uint32_t ts = 0;
+    ts = sntp_get_current_timestamp();
+    INFO("current time : %s\n", sntp_get_real_time(ts));
+    if (ts == 0) {
+        ERROR("did not get a valid time from sntp server\n");
+    } else {
+        os_timer_disarm(&sntp_timer);
+        easyq_connect(&eq);
+    }
 }
 
 void wifiConnectCb(uint8_t status)
 {
     if(status == STATION_GOT_IP){
-        os_timer_disarm(&eq_timer);
-        os_timer_setfn(&eq_timer, (os_timer_func_t *)easyq_task, NULL);
-        os_timer_arm(&eq_timer, 3000, 1); //3s
+        sntp_setservername(0, "pool.ntp.org");        // set sntp server after got ip address
+        sntp_init();
+        os_timer_disarm(&sntp_timer);
+        os_timer_setfn(&sntp_timer, (os_timer_func_t *)sntpfn, NULL);
+        os_timer_arm(&sntp_timer, 1000, 1);//1s
     } else {
-        os_timer_disarm(&eq_timer);
+        easyq_disconnect(&eq);
     }
 }
+
+void easyq_connect_cb(EasyQSession* eq)
+{
+    INFO("EasyQ: Connected\r\n");
+    easyq_pull(eq, "q1");
+    easyq_push(eq, "q1", "hello\0");
+}
+
+void easyq_disconnected_cb(EasyQSession* eq)
+{
+    INFO("EASYQ: Disconnected\r\n");
+}
+
+void easyq_push_cb(EasyQSession* eq)
+{
+    INFO("EASYQ: SENT\r\n");
+}
+
+void easyq_pull_cb(EasyQSession* eq, EasyQueue * queue, const char *data, uint32_t data_len)
+{
+    INFO("Receive Message: %s, data: %s \r\n", queue->title, data);
+    os_free(topicBuf);
+    os_free(dataBuf);
+}
+
 
 void user_init(void)
 {
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
     os_delay_us(60000);
+	easyq_init(&eq, "192.168.8.44", 1085);
+
+    easyq_onconnected(&eq, easyq_connect_cb);
+    easyq_ondisconnected(&eq, easyq_disconnect_cb);
+    easyq_onpublished(&eq, easyq_push_cb);
+    easyq_ondata(&eq, easyq_pull_cb);
+
     WIFI_Connect("Jigoodi", "himopolooK905602", wifiConnectCb);
     INFO("\r\nSystem started ...\r\n");
 }

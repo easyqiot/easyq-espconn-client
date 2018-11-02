@@ -1,5 +1,5 @@
 #############################################################
-# Required variables for each makefile
+
 # Discard this section from all parent makefiles
 # Expected variables (with automatic defaults):
 #   CSRCS (all "C" files in the dir)
@@ -23,6 +23,7 @@ GEN_BINS= eagle.app.v6.bin
 SPECIAL_MKTARGETS=$(APP_MKTARGETS)
 SUBDIRS=    \
 	user    \
+	easyq   \
 	modules  
 
 endif # } PDIR
@@ -48,6 +49,7 @@ endif
 
 COMPONENTS_eagle.app.v6 = \
 	user/libuser.a  \
+	easyq/libeasyq.a  \
 	modules/libmodules.a
 
 LINKFLAGS_eagle.app.v6 = \
@@ -120,7 +122,7 @@ DDEFINES +=				\
 # Required for each makefile to inherit from the parent
 #
 
-INCLUDES := $(INCLUDES) -I $(PDIR)include -I $(PDIR)include/modules
+INCLUDES := $(INCLUDES) -I $(PDIR)include -I $(PDIR)easyq/include
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 
