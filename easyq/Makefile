@@ -12,7 +12,7 @@
 #     a generated lib/image xxx.a ()
 #
 ifndef PDIR
-GEN_LIBS = libmqtt.a
+GEN_LIBS = libeasyq.a
 endif
 
 

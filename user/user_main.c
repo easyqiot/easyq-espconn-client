@@ -69,30 +69,27 @@ void wifiConnectCb(uint8_t status)
     }
 }
 
-void easyq_connect_cb(EasyQSession* eq)
-{
-    INFO("EasyQ: Connected\r\n");
-    easyq_pull(eq, "q1");
-    easyq_push(eq, "q1", "hello\0");
-}
-
-void easyq_disconnected_cb(EasyQSession* eq)
-{
-    INFO("EASYQ: Disconnected\r\n");
-}
-
-void easyq_push_cb(EasyQSession* eq)
-{
-    INFO("EASYQ: SENT\r\n");
-}
-
-void easyq_pull_cb(EasyQSession* eq, EasyQueue * queue, const char *data, uint32_t data_len)
-{
-    INFO("Receive Message: %s, data: %s \r\n", queue->title, data);
-    os_free(topicBuf);
-    os_free(dataBuf);
-}
-
+//void easyq_connect_cb(EasyQSession* eq)
+//{
+//    INFO("EasyQ: Connected\r\n");
+//    easyq_pull(eq, "q1");
+//    easyq_push(eq, "q1", "hello\0");
+//}
+//
+//void easyq_disconnected_cb(EasyQSession* eq)
+//{
+//    INFO("EASYQ: Disconnected\r\n");
+//}
+//
+//void easyq_push_cb(EasyQSession* eq)
+//{
+//    INFO("EASYQ: SENT\r\n");
+//}
+//
+//void easyq_pull_cb(EasyQSession* eq, EasyQueue * queue, const char *data, uint32_t data_len)
+//{
+//    INFO("Receive Message: %s, data: %s \r\n", queue->title, data);
+//}
 
 void user_init(void)
 {
@@ -100,10 +97,10 @@ void user_init(void)
     os_delay_us(60000);
 	easyq_init(&eq, "192.168.8.44", 1085);
 
-    easyq_onconnected(&eq, easyq_connect_cb);
-    easyq_ondisconnected(&eq, easyq_disconnect_cb);
-    easyq_onpublished(&eq, easyq_push_cb);
-    easyq_ondata(&eq, easyq_pull_cb);
+//    easyq_onconnected(&eq, easyq_connect_cb);
+//    easyq_ondisconnected(&eq, easyq_disconnect_cb);
+//    easyq_onpublished(&eq, easyq_push_cb);
+//    easyq_ondata(&eq, easyq_pull_cb);
 
     WIFI_Connect("Jigoodi", "himopolooK905602", wifiConnectCb);
     INFO("\r\nSystem started ...\r\n");
