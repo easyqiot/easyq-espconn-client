@@ -97,7 +97,6 @@ easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
     {
         os_memcpy(eq->tcpconn->proto.tcp->remote_ip, &ipaddr->addr, 4);
         espconn_connect(eq->tcpconn);
-        eq->status = EASYQ_CONNECTING;
         INFO("TCP: connecting...\r\n");
     }
 
@@ -133,9 +132,9 @@ void ICACHE_FLASH_ATTR easyq_connect(EasyQSession *eq) {
     espconn_regist_connectcb(eq->tcpconn, easyq_tcpclient_connect_cb);
     espconn_regist_reconcb(eq->tcpconn, easyq_tcpclient_recon_cb);
 
-//    os_timer_disarm(&eq->timer);
-//    os_timer_setfn(&eq->timer, (os_timer_func_t *)easyq_timer, eq);
-//    os_timer_arm(&eq->timer, 1000, 1);
+    //os_timer_disarm(&eq->timer);
+    //os_timer_setfn(&eq->timer, (os_timer_func_t *)easyq_timer, eq);
+    //os_timer_arm(&eq->timer, 1000, 1);
 
     if (UTILS_StrToIP(eq->hostname, &eq->tcpconn->proto.tcp->remote_ip)) {
         INFO("TCP: Connect to ip  %s:%d\r\n", eq->hostname, eq->port);
@@ -145,6 +144,15 @@ void ICACHE_FLASH_ATTR easyq_connect(EasyQSession *eq) {
         INFO("TCP: Connect to domain %s:%d\r\n", eq->hostname, eq->port);
         espconn_gethostbyname(eq->tcpconn, eq->hostname, &eq->ip, easyq_dns_found);
     }
+}
+
+
+void ICACHE_FLASH_ATTR
+easyq_disconnect(EasyQSession *eq)
+{
+    eq->status = EASYQ_DISCONNECTING;
+    system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
+    //os_timer_disarm(&eq->timer);
 }
 
 
@@ -183,14 +191,6 @@ easyq_task(os_event_t *e)
 	    }
 }
 
-
-void ICACHE_FLASH_ATTR
-easyq_disconnect(EasyQSession *eq)
-{
-    eq->status = EASYQ_DISCONNECTING;
-    system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
-    //os_timer_disarm(&eq->timer);
-}
 
 
 void ICACHE_FLASH_ATTR easyq_init(EasyQSession * eq, const char *hostname, 
