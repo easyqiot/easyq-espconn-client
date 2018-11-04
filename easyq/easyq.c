@@ -27,7 +27,7 @@ easyq_delete(EasyQSession *eq)
 {
     eq->status = EASYQ_DELETING;
     system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
-    os_timer_disarm(&eq->timer);
+    //os_timer_disarm(&eq->timer);
 }
 
 
@@ -105,17 +105,17 @@ easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
 }
 
 
-void ICACHE_FLASH_ATTR easyq_timer(void *arg)
-{
-    EasyQSession* eq = (EasyQSession*)arg;
-	if (eq->status == EASYQ_RECONNECT_REQ) {
-        eq->status = EASYQ_RECONNECT;
-        system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
-    }
-	else { 
-		INFO("Nothing to do\r\n");
-	}
-}
+//void ICACHE_FLASH_ATTR easyq_timer(void *arg)
+//{
+//    EasyQSession* eq = (EasyQSession*)arg;
+//	if (eq->status == EASYQ_RECONNECT_REQ) {
+//        eq->status = EASYQ_RECONNECT;
+//        system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
+//    }
+//	else { 
+//		INFO("Nothing to do\r\n");
+//	}
+//}
 
 
 void ICACHE_FLASH_ATTR easyq_connect(EasyQSession *eq) {
@@ -133,9 +133,9 @@ void ICACHE_FLASH_ATTR easyq_connect(EasyQSession *eq) {
     espconn_regist_connectcb(eq->tcpconn, easyq_tcpclient_connect_cb);
     espconn_regist_reconcb(eq->tcpconn, easyq_tcpclient_recon_cb);
 
-    os_timer_disarm(&eq->timer);
-    os_timer_setfn(&eq->timer, (os_timer_func_t *)easyq_timer, eq);
-    os_timer_arm(&eq->timer, 1000, 1);
+//    os_timer_disarm(&eq->timer);
+//    os_timer_setfn(&eq->timer, (os_timer_func_t *)easyq_timer, eq);
+//    os_timer_arm(&eq->timer, 1000, 1);
 
     if (UTILS_StrToIP(eq->hostname, &eq->tcpconn->proto.tcp->remote_ip)) {
         INFO("TCP: Connect to ip  %s:%d\r\n", eq->hostname, eq->port);
@@ -189,7 +189,7 @@ easyq_disconnect(EasyQSession *eq)
 {
     eq->status = EASYQ_DISCONNECTING;
     system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
-    os_timer_disarm(&eq->timer);
+    //os_timer_disarm(&eq->timer);
 }
 
 
