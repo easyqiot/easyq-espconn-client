@@ -5,31 +5,34 @@
 #include "_easyq.c"
 
 /* State Machine
-+------------+------------+------------+--------+
-| state\req  |  CONNECT   | DISCONNECT | DELETE |
-+------------+------------+------------+--------+
-| IDLE       | CONNECTED  | ERR        | NULL   |
-| CONNECT    | ERR        | IDLE       | NULL   |
-| CONNECTED  | ERR        | IDLE       | NULL   |
-| DISCONNECT | IDLE       | ERR        | ERR    |
-| DELETE     | ERR        | ERR        | ERR    |
-+------------+------------+------------+--------+
+ 
++------------+-----------+------------+--------+-----------+--+
+| state\req  |  CONNECT  | DISCONNECT | DELETE | RECONNECT |  |
++------------+-----------+------------+--------+-----------+--+
+| IDLE       | CONECTED  | ERR        | NULL   | ERR       |  |
+| CONNECT    | ERR       | IDLE       | NULL   | ERR       |  |
+| CONNECTED  | ERR       | IDLE       | NULL   | ERR       |  |
+| DISCONNECT | ERR       | ERR        | ERR    | ERR       |  |
+| DELETE     | ERR       | ERR        | ERR    | ERR       |  |
+| RECONNECT  | CONNECTED | IDLE       | ERR    | ERR       |  |
++------------+-----------+------------+--------+-----------+--+
+
 */
 LOCAL EasyQError ICACHE_FLASH_ATTR
-_easyq_validate_transition(EasyQStatus from, EasyQStatus to) {
-	switch (from){
+_easyq_validate_transition(EasyQStatus state, EasyQStatus command) {
+	switch (state) {
 		case EASYQ_IDLE:
-			if (to == EASYQ_DISCONNECT) {
+			if (command == EASYQ_DISCONNECT || command == EASYQ_RECONNECT) {
 				return EASYQ_ERR_NOT_CONNECTED;
 			}
 			break;
 		case EASYQ_CONNECT:
-			if (to == EASYQ_CONNECT) {
+			if (command == EASYQ_CONNECT || command == EASYQ_RECONNECT) {
 				return EASYQ_ERR_ALREADY_CONNECTING;
 			}
 			break;
 		case EASYQ_CONNECTED:
-			if (to == EASYQ_CONNECT) {
+			if (command == EASYQ_CONNECT || command == EASYQ_RECONNECT) {
 				return EASYQ_ERR_ALREADY_CONNECTED;
 			}
 			break;
@@ -55,7 +58,7 @@ easyq_task(os_event_t *e)
 		INFO("EasyQ: IDLE\r\n");
 		break;
     case EASYQ_CONNECT:
-		INFO("EASYQ: Trying connected to %s:%d\r\n", eq->hostname, eq->port);
+		INFO("EASYQ: Trying connect to %s:%d\r\n", eq->hostname, eq->port);
 		_easyq_connect(eq);
         break;
 	case EASYQ_CONNECTED:

@@ -22,6 +22,7 @@ typedef enum {
 	EASYQ_CONNECTED,
 	EASYQ_DISCONNECT,
 	EASYQ_DELETE,
+	EASYQ_RECONNECT,
 } EasyQStatus;
 
 
