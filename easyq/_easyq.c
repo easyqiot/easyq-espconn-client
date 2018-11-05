@@ -9,7 +9,6 @@ LOCAL void ICACHE_FLASH_ATTR
 _easyq_tcpconn_delete(EasyQSession *eq)
 {
     if (eq->tcpconn != NULL) {
-        INFO("Free espconn memory\r\n");
         espconn_delete(eq->tcpconn);
         if (eq->tcpconn->proto.tcp)
             os_free(eq->tcpconn->proto.tcp);
@@ -22,7 +21,6 @@ _easyq_tcpconn_delete(EasyQSession *eq)
 LOCAL void ICACHE_FLASH_ATTR
 _easyq_delete(EasyQSession *eq)
 {
-    INFO("Free EasyQ memory\r\n");
 	_easyq_tcpconn_delete(eq);
     os_free(eq->hostname);
 }
@@ -34,7 +32,7 @@ _easyq_tcpclient_disconnect_cb(void *arg)
 
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
-    INFO("TCP: Disconnected callback\r\n");
+    INFO("TCP: Disconnected\r\n");
 
 	if(EASYQ_DELETE == eq->status) {
 		_easyq_delete(eq);
@@ -56,10 +54,9 @@ _easyq_tcpclient_disconnect_cb(void *arg)
 void ICACHE_FLASH_ATTR
 _easyq_tcpclient_recon_cb(void *arg, sint8 errType)
 {
-	INFO("TCP: Connection error, reconnecting\r\n");
+	INFO("TCP: Reconnect callback, connection error\r\n");
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
-    INFO("TCP: Reconnect to %s:%d\r\n", eq->hostname, eq->port);
 	_easyq_tcpconn_delete(eq);
 	eq->status = EASYQ_RECONNECT;
 }
@@ -70,7 +67,6 @@ _easyq_tcpclient_connect_cb(void *arg)
 {
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
-    INFO("TCP: Connected to %s:%d\r\n", eq->hostname, eq->port);
 	eq->status = EASYQ_CONNECTED;
 	espconn_regist_disconcb(eq->tcpconn, _easyq_tcpclient_disconnect_cb);
     system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
@@ -85,7 +81,7 @@ _easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
 
     if (ipaddr == NULL)
     {
-        INFO("DNS: Found, but got no ip, try to reconnect\r\n");
+        ERROR("DNS: Found, but got no ip, try to reconnect\r\n");
 		_easyq_tcpconn_delete(eq);
         eq->status = EASYQ_CONNECT;
 		system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
@@ -102,14 +98,13 @@ _easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
     {
         os_memcpy(eq->tcpconn->proto.tcp->remote_ip, &ipaddr->addr, 4);
         espconn_connect(eq->tcpconn);
-        INFO("TCP: Connecting...\r\n");
     }
 }
 
 void ICACHE_FLASH_ATTR _easyq_timer(void *arg)
 {
     EasyQSession *eq = (EasyQSession*)arg;
-	INFO("Timer tick\r\n");
+	INFO("Timer tick, Free mem: %du\r\n", system_get_free_heap_size());
 	if (eq->status == EASYQ_RECONNECT) {
 		eq->status = EASYQ_CONNECT;
 		system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
@@ -135,11 +130,9 @@ _easyq_connect(EasyQSession *eq) {
 
 
     if (UTILS_StrToIP(eq->hostname, &eq->tcpconn->proto.tcp->remote_ip)) {
-        INFO("TCP: Connecting to ip  %s:%d\r\n", eq->hostname, eq->port);
         espconn_connect(eq->tcpconn);
     }
     else {
-        INFO("TCP: Connecting to domain %s:%d\r\n", eq->hostname, eq->port);
         espconn_gethostbyname(eq->tcpconn, eq->hostname, &eq->ip, 
 				_easyq_dns_found);
     }

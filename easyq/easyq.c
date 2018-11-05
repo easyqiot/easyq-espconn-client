@@ -61,6 +61,8 @@ easyq_task(os_event_t *e)
 		INFO("EASYQ: Trying connect to %s:%d\r\n", eq->hostname, eq->port);
 		_easyq_connect(eq);
         break;
+    case EASYQ_RECONNECT:
+		INFO("EASYQ: Reconnecting to %s:%d\r\n", eq->hostname, eq->port);
 	case EASYQ_CONNECTED:
 		INFO("EASYQ: Connected to %s:%d\r\n", eq->hostname, eq->port);
 		break;
