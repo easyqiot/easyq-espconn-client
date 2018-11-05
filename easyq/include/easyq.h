@@ -9,20 +9,35 @@
 #include "utils.h"
 
 
+#define EASYQ_TASK_QUEUE_SIZE	1
+#define EASYQ_TASK_PRIO			2
+#define EASYQ_BUF_SIZE			1024	
+
+
+
 typedef enum {
 	EASYQ_IDLE = 0,
+	EASYQ_CONNECT,
 	EASYQ_CONNECTING,
 	EASYQ_CONNECTED,
-	EASYQ_DISCONNECT_REQ,
+	EASYQ_DISCONNECT,
 	EASYQ_DISCONNECTED,
 	// Not Nedded 
-	EASYQ_RECONNECT_REQ,
-	EASYQ_RECONNECT,
 	EASYQ_DATA_RECEIVED,
 	EASYQ_DELETING,
 	EASYQ_DELETED,
 	EASYQ_RECONNECT_DISCONNECTING,
 } EasyQStatus;
+
+
+typedef enum {
+	EASYQ_OK,
+	EASYQ_ERR_ALREADY_CONNECTED,
+	EASYQ_ERR_ALREADY_CONNECTING,
+	EASYQ_ERR_DISCONNECTING,
+	EASYQ_ERR_DELETING,
+} EasyQError;	
+
 
 typedef struct easy_session {
 	struct espconn *tcpconn;
@@ -33,10 +48,12 @@ typedef struct easy_session {
 	ETSTimer timer;
 } EasyQSession;
 
+
 typedef void (*EasyQCallback)(EasyQStatus status);
 
-void ICACHE_FLASH_ATTR easyq_connect(EasyQSession *eq); 
 
+void ICACHE_FLASH_ATTR easyq_connect(EasyQSession *eq); 
+void ICACHE_FLASH_ATTR easyq_disconnect(EasyQSession *eq); 
 void ICACHE_FLASH_ATTR easyq_init(EasyQSession *eq, const char *hostname, 
 		uint16_t port);
 
