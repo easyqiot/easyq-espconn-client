@@ -14,19 +14,14 @@
 #define EASYQ_BUF_SIZE			1024	
 
 
+// TODO: callbacks and restrictions
 
 typedef enum {
 	EASYQ_IDLE = 0,
 	EASYQ_CONNECT,
-	EASYQ_CONNECTING,
 	EASYQ_CONNECTED,
 	EASYQ_DISCONNECT,
-	EASYQ_DISCONNECTED,
-	// Not Nedded 
-	EASYQ_DATA_RECEIVED,
-	EASYQ_DELETING,
-	EASYQ_DELETED,
-	EASYQ_RECONNECT_DISCONNECTING,
+	EASYQ_DELETE,
 } EasyQStatus;
 
 
@@ -37,6 +32,7 @@ typedef enum {
 	EASYQ_ERR_ALREADY_CONNECTING,
 	EASYQ_ERR_DISCONNECTING,
 	EASYQ_ERR_DELETING,
+	EASYQ_ERR_NOT_CONNECTED,
 } EasyQError;	
 
 
@@ -53,10 +49,14 @@ typedef struct easy_session {
 typedef void (*EasyQCallback)(EasyQStatus status);
 
 
-void ICACHE_FLASH_ATTR easyq_connect(EasyQSession *eq); 
-void ICACHE_FLASH_ATTR easyq_disconnect(EasyQSession *eq); 
-void ICACHE_FLASH_ATTR easyq_init(EasyQSession *eq, const char *hostname, 
-		uint16_t port);
+EasyQError ICACHE_FLASH_ATTR 
+easyq_connect(EasyQSession *eq); 
+
+EasyQError ICACHE_FLASH_ATTR 
+easyq_disconnect(EasyQSession *eq); 
+
+EasyQError ICACHE_FLASH_ATTR 
+easyq_init(EasyQSession *eq, const char *hostname, uint16_t port);
 
 #endif
 

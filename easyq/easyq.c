@@ -1,12 +1,14 @@
 #include "easyq.h"
 #include "debug.h"
 
+// Internal
+#include "_easyq.c"
 
 /* State Machine
 +------------+------------+------------+--------+
 | state\req  |  CONNECT   | DISCONNECT | DELETE |
 +------------+------------+------------+--------+
-| IDLE       | CONNECTING | ERR        | NULL   |
+| IDLE       | CONNECTED  | ERR        | NULL   |
 | CONNECT    | ERR        | IDLE       | NULL   |
 | CONNECTED  | ERR        | IDLE       | NULL   |
 | DISCONNECT | ERR        | ERR        | ERR    |
@@ -48,11 +50,13 @@ easyq_task(os_event_t *e)
     switch (eq->status) {
 		case EASYQ_IDLE:
 			INFO("EasyQ IDLE\r\n");
-		case EASYQ_CONNECTED;
-			INFO("TCP: Connected to %s:%d\r\n", eq->hostname, eq->port);
+			break;
 	    case EASYQ_CONNECT:
 			_easyq_connect(eq);
 	        break;
+		case EASYQ_CONNECTED:
+			INFO("TCP: Connected to %s:%d\r\n", eq->hostname, eq->port);
+			break;
 	    case EASYQ_DISCONNECT:
 	    case EASYQ_DELETE:
 			_easyq_disconnect(eq);
@@ -92,8 +96,7 @@ easyq_disconnect(EasyQSession *eq) {
 /* Alocate memory and inititalize the task
  */
 EasyQError ICACHE_FLASH_ATTR 
-easyq_init(EasyQSession *eq, const char *hostname, 
-		uint16_t port) {
+easyq_init(EasyQSession *eq, const char *hostname, uint16_t port) {
 	if (eq->hostname) {
 		return EASYQ_ERR_ALREADY_INITIALIZED;
 	}

@@ -84,7 +84,9 @@ _easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
     if (ipaddr == NULL)
     {
         INFO("DNS: Found, but got no ip, try to reconnect\r\n");
-        eq->status = EASYQ_RECONNECT_REQ;
+		_easyq_tcpconn_delete(eq);
+        eq->status = EASYQ_CONNECT;
+		system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
         return;
     }
 
@@ -100,7 +102,6 @@ _easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
         espconn_connect(eq->tcpconn);
         INFO("TCP: connecting...\r\n");
     }
-
 }
 
 
@@ -113,8 +114,8 @@ _easyq_connect(EasyQSession *eq) {
     eq->tcpconn->proto.tcp->local_port = espconn_port();
     eq->tcpconn->proto.tcp->remote_port = eq->port;
     eq->tcpconn->reverse = eq; 
-    espconn_regist_connectcb(eq->tcpconn, easyq_tcpclient_connect_cb);
-    espconn_regist_reconcb(eq->tcpconn, easyq_tcpclient_recon_cb);
+    espconn_regist_connectcb(eq->tcpconn, _easyq_tcpclient_connect_cb);
+    espconn_regist_reconcb(eq->tcpconn, _easyq_tcpclient_recon_cb);
 
     if (UTILS_StrToIP(eq->hostname, &eq->tcpconn->proto.tcp->remote_ip)) {
         INFO("TCP: Connect to ip  %s:%d\r\n", eq->hostname, eq->port);
@@ -123,13 +124,13 @@ _easyq_connect(EasyQSession *eq) {
     else {
         INFO("TCP: Connect to domain %s:%d\r\n", eq->hostname, eq->port);
         espconn_gethostbyname(eq->tcpconn, eq->hostname, &eq->ip, 
-				easyq_dns_found);
+				_easyq_dns_found);
     }
 }
 
 
 LOCAL void ICACHE_FLASH_ATTR 
 _easyq_disconnect(EasyQSession *eq) {
-    espconn_disconnect(eq);
+    espconn_disconnect(eq->tcpconn);
 }
 
