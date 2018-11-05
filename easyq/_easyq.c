@@ -33,6 +33,11 @@ _easyq_start_reconnect_timer(EasyQSession *eq) {
 }
 
 LOCAL void ICACHE_FLASH_ATTR
+_easyq_stop_reconnect_timer(EasyQSession *eq) {
+}
+
+
+LOCAL void ICACHE_FLASH_ATTR
 _easyq_tcpclient_disconnect_cb(void *arg)
 {
 
