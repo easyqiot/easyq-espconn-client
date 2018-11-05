@@ -30,18 +30,27 @@ void wifiConnectCb(uint8_t status) {
 }
 
 
-void easyq_connect_cb(void * arg)
-{
-    INFO("EasyQ: Connected\r\n");
+void easyq_connect_cb(void *arg) {
+	EasyQSession *e = (EasyQSession*) arg;
+	INFO("EASYQ: Connected to %s:%d\r\n", e->hostname, e->port);
     //easyq_pull(eq, "q1");
     //easyq_push(eq, "q1", "hello\0");
 }
 
-//
-//void easyq_disconnected_cb(EasyQSession* eq)
-//{
-//    INFO("EASYQ: Disconnected\r\n");
-//}
+
+void easyq_connection_error_cb(void *arg) {
+	EasyQSession *e = (EasyQSession*) arg;
+	INFO("EASYQ: Connection error: %s:%d\r\n", e->hostname, e->port);
+	INFO("EASYQ: Reconnecting to %s:%d\r\n", e->hostname, e->port);
+}
+
+void easyq_disconnect_cb(void *arg)
+{
+	EasyQSession *e = (EasyQSession*) arg;
+	INFO("EASYQ: Disconnected from %s:%d\r\n", e->hostname, e->port);
+}
+
+
 //
 //void easyq_push_cb(EasyQSession* eq)
 //{
@@ -64,6 +73,8 @@ void user_init(void)
 		return;
 	}
     eq.onconnect = easyq_connect_cb;
+    eq.ondisconnect = easyq_disconnect_cb;
+	eq.onconnectionerror = easyq_connection_error_cb;
 //    easyq_ondisconnected(&eq, easyq_disconnect_cb);
 //    easyq_onpublished(&eq, easyq_push_cb);
 //    easyq_ondata(&eq, easyq_pull_cb);

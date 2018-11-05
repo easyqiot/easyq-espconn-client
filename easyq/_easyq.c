@@ -32,7 +32,10 @@ _easyq_tcpclient_disconnect_cb(void *arg)
 
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
-    INFO("TCP: Disconnected\r\n");
+
+	if (eq->ondisconnect) {
+		eq->ondisconnect(eq);
+	}
 
 	if(EASYQ_DELETE == eq->status) {
 		_easyq_delete(eq);
@@ -54,11 +57,13 @@ _easyq_tcpclient_disconnect_cb(void *arg)
 void ICACHE_FLASH_ATTR
 _easyq_tcpclient_recon_cb(void *arg, sint8 errType)
 {
-	INFO("TCP: Reconnect callback, connection error\r\n");
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
 	_easyq_tcpconn_delete(eq);
 	eq->status = EASYQ_RECONNECT;
+	if (eq->onconnectionerror) {
+		eq->onconnectionerror(eq);
+	}
 }
 
 
@@ -69,6 +74,9 @@ _easyq_tcpclient_connect_cb(void *arg)
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
 	eq->status = EASYQ_CONNECTED;
 	espconn_regist_disconcb(eq->tcpconn, _easyq_tcpclient_disconnect_cb);
+	if (eq->onconnect) {
+		eq->onconnect(eq);
+	}
     system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
 }
 

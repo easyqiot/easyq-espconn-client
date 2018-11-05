@@ -48,6 +48,8 @@ typedef struct easy_session {
 	ip_addr_t ip;
 	ETSTimer timer;
 	EasyQCallback onconnect;
+	EasyQCallback ondisconnect;
+	EasyQCallback onconnectionerror;
 } EasyQSession;
 
 
