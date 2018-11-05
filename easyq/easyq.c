@@ -11,7 +11,7 @@
 | IDLE       | CONNECTED  | ERR        | NULL   |
 | CONNECT    | ERR        | IDLE       | NULL   |
 | CONNECTED  | ERR        | IDLE       | NULL   |
-| DISCONNECT | ERR        | ERR        | ERR    |
+| DISCONNECT | IDLE       | ERR        | ERR    |
 | DELETE     | ERR        | ERR        | ERR    |
 +------------+------------+------------+--------+
 */
@@ -22,14 +22,17 @@ _easyq_validate_transition(EasyQStatus from, EasyQStatus to) {
 			if (to == EASYQ_DISCONNECT) {
 				return EASYQ_ERR_NOT_CONNECTED;
 			}
+			break;
 		case EASYQ_CONNECT:
 			if (to == EASYQ_CONNECT) {
 				return EASYQ_ERR_ALREADY_CONNECTING;
 			}
+			break;
 		case EASYQ_CONNECTED:
 			if (to == EASYQ_CONNECT) {
 				return EASYQ_ERR_ALREADY_CONNECTED;
 			}
+			break;
 		case EASYQ_DISCONNECT:
 			return EASYQ_ERR_DISCONNECTING;
 		case EASYQ_DELETE:
@@ -48,20 +51,23 @@ easyq_task(os_event_t *e)
 
     EasyQSession* eq = (EasyQSession*)e->par;
     switch (eq->status) {
-		case EASYQ_IDLE:
-			INFO("EasyQ IDLE\r\n");
-			break;
-	    case EASYQ_CONNECT:
-			_easyq_connect(eq);
-	        break;
-		case EASYQ_CONNECTED:
-			INFO("TCP: Connected to %s:%d\r\n", eq->hostname, eq->port);
-			break;
-	    case EASYQ_DISCONNECT:
-	    case EASYQ_DELETE:
-			_easyq_disconnect(eq);
-			break;
-	    }
+	case EASYQ_IDLE:
+		INFO("EasyQ: IDLE\r\n");
+		break;
+    case EASYQ_CONNECT:
+		INFO("EASYQ: Trying connected to %s:%d\r\n", eq->hostname, eq->port);
+		_easyq_connect(eq);
+        break;
+	case EASYQ_CONNECTED:
+		INFO("EASYQ: Connected to %s:%d\r\n", eq->hostname, eq->port);
+		break;
+    case EASYQ_DISCONNECT:
+		INFO("EASYQ: Disconnecting From %s:%d\r\n", eq->hostname, eq->port);
+    case EASYQ_DELETE:
+		INFO("EASYQ: deleting %s:%d\r\n", eq->hostname, eq->port);
+		_easyq_disconnect(eq);
+		break;
+    }
 }
 
 

@@ -17,8 +17,13 @@ EasyQSession eq;
 
 
 void wifiConnectCb(uint8_t status) {
+	EasyQError err;
     if(status == STATION_GOT_IP) {
-        easyq_connect(&eq);
+        err = easyq_connect(&eq);
+		if (err != EASYQ_OK) {
+			ERROR("EASYQ CONNECT ERROR: %d\r\n", err);
+			easyq_disconnect(&eq);
+		}
     } else {
         easyq_disconnect(&eq);
     }
@@ -50,8 +55,11 @@ void user_init(void)
 {
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
     os_delay_us(60000);
-	easyq_init(&eq, "192.168.8.44", 1085);
-
+	EasyQError err = easyq_init(&eq, "192.168.8.44", 1085);
+	if (err != EASYQ_OK) {
+		ERROR("EASYQ INIT ERROR: %d\r\n", err);
+		return;
+	}
 //    easyq_onconnected(&eq, easyq_connect_cb);
 //    easyq_ondisconnected(&eq, easyq_disconnect_cb);
 //    easyq_onpublished(&eq, easyq_push_cb);
