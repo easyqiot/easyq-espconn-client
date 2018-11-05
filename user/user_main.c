@@ -29,12 +29,14 @@ void wifiConnectCb(uint8_t status) {
     }
 }
 
-//void easyq_connect_cb(EasyQSession* eq)
-//{
-//    INFO("EasyQ: Connected\r\n");
-//    easyq_pull(eq, "q1");
-//    easyq_push(eq, "q1", "hello\0");
-//}
+
+void easyq_connect_cb(void * arg)
+{
+    INFO("EasyQ: Connected\r\n");
+    //easyq_pull(eq, "q1");
+    //easyq_push(eq, "q1", "hello\0");
+}
+
 //
 //void easyq_disconnected_cb(EasyQSession* eq)
 //{
@@ -51,6 +53,7 @@ void wifiConnectCb(uint8_t status) {
 //    INFO("Receive Message: %s, data: %s \r\n", queue->title, data);
 //}
 
+
 void user_init(void)
 {
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
@@ -60,7 +63,7 @@ void user_init(void)
 		ERROR("EASYQ INIT ERROR: %d\r\n", err);
 		return;
 	}
-//    easyq_onconnected(&eq, easyq_connect_cb);
+    eq.onconnect = easyq_connect_cb;
 //    easyq_ondisconnected(&eq, easyq_disconnect_cb);
 //    easyq_onpublished(&eq, easyq_push_cb);
 //    easyq_ondata(&eq, easyq_pull_cb);

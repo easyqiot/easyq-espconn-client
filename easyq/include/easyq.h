@@ -37,6 +37,9 @@ typedef enum {
 } EasyQError;	
 
 
+typedef void (*EasyQCallback)(void *eq);
+
+
 typedef struct easy_session {
 	struct espconn *tcpconn;
 	char *hostname;
@@ -44,10 +47,10 @@ typedef struct easy_session {
 	EasyQStatus status;
 	ip_addr_t ip;
 	ETSTimer timer;
+	EasyQCallback onconnect;
 } EasyQSession;
 
 
-typedef void (*EasyQCallback)(EasyQStatus status);
 
 
 EasyQError ICACHE_FLASH_ATTR 
@@ -58,6 +61,7 @@ easyq_disconnect(EasyQSession *eq);
 
 EasyQError ICACHE_FLASH_ATTR 
 easyq_init(EasyQSession *eq, const char *hostname, uint16_t port);
+
 
 #endif
 
