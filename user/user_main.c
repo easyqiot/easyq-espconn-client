@@ -44,6 +44,7 @@ void easyq_connection_error_cb(void *arg) {
 	INFO("EASYQ: Reconnecting to %s:%d\r\n", e->hostname, e->port);
 }
 
+
 void easyq_disconnect_cb(void *arg)
 {
 	EasyQSession *e = (EasyQSession*) arg;
