@@ -75,7 +75,6 @@ void user_init(void)
     eq.onconnect = easyq_connect_cb;
     eq.ondisconnect = easyq_disconnect_cb;
 	eq.onconnectionerror = easyq_connection_error_cb;
-//    easyq_ondisconnected(&eq, easyq_disconnect_cb);
 //    easyq_onpublished(&eq, easyq_push_cb);
 //    easyq_ondata(&eq, easyq_pull_cb);
 
