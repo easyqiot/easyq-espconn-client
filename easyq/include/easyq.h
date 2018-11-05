@@ -47,6 +47,7 @@ typedef struct easy_session {
 	EasyQStatus status;
 	ip_addr_t ip;
 	ETSTimer timer;
+	uint64_t ticks;
 	EasyQCallback onconnect;
 	EasyQCallback ondisconnect;
 	EasyQCallback onconnectionerror;

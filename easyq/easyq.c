@@ -115,6 +115,7 @@ easyq_init(EasyQSession *eq, const char *hostname, uint16_t port) {
 	os_strcpy(eq->hostname, hostname);
 	eq->hostname[hostname_len] = '\0';
 	eq->port = port;
+	eq->ticks = 0;
 	eq->status = EASYQ_IDLE;
 	INFO("Preparing EasyQ Server: %s:%d\r\n", hostname, port);
     system_os_task(easyq_task, EASYQ_TASK_PRIO, easyq_task_queue, 

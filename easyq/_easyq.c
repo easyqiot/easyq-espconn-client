@@ -112,7 +112,11 @@ _easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
 void ICACHE_FLASH_ATTR _easyq_timer(void *arg)
 {
     EasyQSession *eq = (EasyQSession*)arg;
-	INFO("Timer tick, Free mem: %du\r\n", system_get_free_heap_size());
+	eq->ticks++;
+	INFO("Timer tick: %lu\r\n", eq->ticks);
+	if (eq->ticks % 10 == 0) {
+		system_print_meminfo();
+	}
 	if (eq->status == EASYQ_RECONNECT) {
 		eq->status = EASYQ_CONNECT;
 		system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
