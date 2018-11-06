@@ -3,3 +3,5 @@
 # vim
 .*.sw[po]
 
+# Projejct specific
+include/wifi_config.h

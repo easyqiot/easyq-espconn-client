@@ -12,6 +12,7 @@
 // Internal 
 #include "partition.h"
 #include "wifi.h"
+#include "wifi_config.h"
 
 
 EasyQSession eq;
@@ -39,7 +40,7 @@ void easyq_disconnect_cb(void *arg)
 }
 
 
-void wifiConnectCb(uint8_t status) {
+void wifi_connect_cb(uint8_t status) {
 	EasyQError err;
     if(status == STATION_GOT_IP) {
         err = easyq_connect(&eq);
@@ -66,7 +67,7 @@ void user_init(void)
     eq.ondisconnect = easyq_disconnect_cb;
 	eq.onconnectionerror = easyq_connection_error_cb;
 
-    WIFI_Connect("Jigoodi", "himopolooK905602", wifiConnectCb);
+    WIFI_Connect(WIFI_SSID, WIFI_PSK, wifi_connect_cb);
     INFO("System started ...\r\n");
 }
 
