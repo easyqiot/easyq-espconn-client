@@ -4,4 +4,4 @@
 .*.sw[po]
 
 # Projejct specific
-include/wifi_config.h
+include/config.h

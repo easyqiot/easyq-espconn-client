@@ -12,7 +12,7 @@
 // Internal 
 #include "partition.h"
 #include "wifi.h"
-#include "wifi_config.h"
+#include "config.h"
 
 
 EasyQSession eq;
@@ -58,7 +58,7 @@ void user_init(void)
 {
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
     os_delay_us(60000);
-	EasyQError err = easyq_init(&eq, "192.168.8.44", 1085);
+	EasyQError err = easyq_init(&eq, EASYQ_HOSTNAME, EASYQ_PORT);
 	if (err != EASYQ_OK) {
 		ERROR("EASYQ INIT ERROR: %d\r\n", err);
 		return;
