@@ -1,5 +1,5 @@
-#ifndef EASYQ_H_
-#define EASYQ_H_
+#ifndef _EASYQ_H_
+#define _EASYQ_H_
 
 #include "mem.h"
 #include "osapi.h"

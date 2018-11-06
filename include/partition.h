@@ -1,3 +1,6 @@
+#ifndef _PARTITION_CONFIG_H__
+#define _PARTITION_CONFIG_H__
+
 
 #if (SPI_FLASH_SIZE_MAP == 2)
 #define SYSTEM_PARTITION_OTA_SIZE							0x6A000
@@ -20,4 +23,5 @@ static const partition_item_t at_partition_table[] = {
 };
 
 
+#endif
 
