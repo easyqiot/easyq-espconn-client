@@ -23,8 +23,7 @@ GEN_BINS= eagle.app.v6.bin
 SPECIAL_MKTARGETS=$(APP_MKTARGETS)
 SUBDIRS=    \
 	user    \
-	easyq   \
-	modules  
+	easyq   
 
 endif # } PDIR
 
@@ -49,8 +48,7 @@ endif
 
 COMPONENTS_eagle.app.v6 = \
 	user/libuser.a  \
-	easyq/libeasyq.a  \
-	modules/libmodules.a
+	easyq/libeasyq.a 
 
 LINKFLAGS_eagle.app.v6 = \
 	-L../lib        \

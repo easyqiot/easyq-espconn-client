@@ -54,7 +54,7 @@ _easyq_tcpclient_disconnect_cb(void *arg) {
     system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
 }
 
-
+/* START espconn callbacks */
 void ICACHE_FLASH_ATTR
 _easyq_tcpclient_recon_cb(void *arg, sint8 errType) {
     struct espconn *tcpconn = (struct espconn *)arg;
@@ -106,6 +106,7 @@ _easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg) {
         espconn_connect(eq->tcpconn);
     }
 }
+/* END espconn callbacks */
 
 
 void ICACHE_FLASH_ATTR 

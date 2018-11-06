@@ -7,11 +7,11 @@
 
 // LIB: EasyQ
 #include "easyq.h" 
+#include "debug.h"
 
 // Internal 
 #include "partition.h"
 #include "wifi.h"
-#include "debug.h"
 
 
 EasyQSession eq;
