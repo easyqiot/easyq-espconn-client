@@ -5,30 +5,16 @@
 #include "mem.h"
 #include "user_interface.h"
 
-// EasyQ
-#include "easyq.h"
+// LIB: EasyQ
+#include "easyq.h" 
 
-// Modules
+// Internal 
 #include "partition.h"
 #include "wifi.h"
 #include "debug.h"
 
 
 EasyQSession eq;
-
-
-void wifiConnectCb(uint8_t status) {
-	EasyQError err;
-    if(status == STATION_GOT_IP) {
-        err = easyq_connect(&eq);
-		if (err != EASYQ_OK) {
-			ERROR("EASYQ CONNECT ERROR: %d\r\n", err);
-			easyq_disconnect(&eq);
-		}
-    } else {
-        easyq_disconnect(&eq);
-    }
-}
 
 
 void easyq_connect_cb(void *arg) {
@@ -50,6 +36,20 @@ void easyq_disconnect_cb(void *arg)
 {
 	EasyQSession *e = (EasyQSession*) arg;
 	INFO("EASYQ: Disconnected from %s:%d\r\n", e->hostname, e->port);
+}
+
+
+void wifiConnectCb(uint8_t status) {
+	EasyQError err;
+    if(status == STATION_GOT_IP) {
+        err = easyq_connect(&eq);
+		if (err != EASYQ_OK) {
+			ERROR("EASYQ CONNECT ERROR: %d\r\n", err);
+			easyq_disconnect(&eq);
+		}
+    } else {
+        easyq_disconnect(&eq);
+    }
 }
 
 

@@ -26,6 +26,13 @@ _easyq_delete(EasyQSession *eq)
 }
 
 
+LOCAL void ICACHE_FLASH_ATTR 
+_easyq_disconnect(EasyQSession *eq) {
+    os_timer_disarm(&eq->timer);
+    espconn_disconnect(eq->tcpconn);
+}
+
+
 LOCAL void ICACHE_FLASH_ATTR
 _easyq_tcpclient_disconnect_cb(void *arg)
 {
@@ -148,12 +155,5 @@ _easyq_connect(EasyQSession *eq) {
         espconn_gethostbyname(eq->tcpconn, eq->hostname, &eq->ip, 
 				_easyq_dns_found);
     }
-}
-
-
-LOCAL void ICACHE_FLASH_ATTR 
-_easyq_disconnect(EasyQSession *eq) {
-    os_timer_disarm(&eq->timer);
-    espconn_disconnect(eq->tcpconn);
 }
 
