@@ -18,15 +18,16 @@
 EasyQSession eq;
 
 
-void easyq_connect_cb(void *arg) {
-	EasyQSession *e = (EasyQSession*) arg;
-	INFO("EASYQ: Connected to %s:%d\r\n", e->hostname, e->port);
-    //easyq_pull(eq, "q1");
-    //easyq_push(eq, "q1", "hello\0");
+
+void ICACHE_FLASH_ATTR
+easyq_connect_cb(void *arg) {
+	INFO("EASYQ: Connected to %s:%d\r\n", eq.hostname, eq.port);
+	easyq_pull(&eq, "q");
 }
 
 
-void easyq_connection_error_cb(void *arg) {
+void ICACHE_FLASH_ATTR
+easyq_connection_error_cb(void *arg) {
 	EasyQSession *e = (EasyQSession*) arg;
 	INFO("EASYQ: Connection error: %s:%d\r\n", e->hostname, e->port);
 	INFO("EASYQ: Reconnecting to %s:%d\r\n", e->hostname, e->port);
@@ -58,7 +59,7 @@ void user_init(void)
 {
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
     os_delay_us(60000);
-	EasyQError err = easyq_init(&eq, EASYQ_HOSTNAME, EASYQ_PORT);
+	EasyQError err = easyq_init(&eq, EASYQ_HOSTNAME, EASYQ_PORT, EASYQ_LOGIN);
 	if (err != EASYQ_OK) {
 		ERROR("EASYQ INIT ERROR: %d\r\n", err);
 		return;
