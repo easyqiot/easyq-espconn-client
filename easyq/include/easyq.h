@@ -14,8 +14,6 @@
 #define EASYQ_BUF_SIZE			1024	
 
 
-// TODO: callbacks and restrictions
-
 typedef enum {
 	EASYQ_IDLE = 0,
 	EASYQ_CONNECT,
@@ -52,8 +50,6 @@ typedef struct easy_session {
 	EasyQCallback ondisconnect;
 	EasyQCallback onconnectionerror;
 } EasyQSession;
-
-
 
 
 EasyQError ICACHE_FLASH_ATTR 
