@@ -2,12 +2,8 @@
 #include "debug.h"
 
 
-os_event_t easyq_task_queue[EASYQ_TASK_QUEUE_SIZE];
-
-
 LOCAL void ICACHE_FLASH_ATTR
-_easyq_tcpconn_delete(EasyQSession *eq)
-{
+_easyq_tcpconn_delete(EasyQSession *eq) {
     if (eq->tcpconn != NULL) {
         espconn_delete(eq->tcpconn);
         if (eq->tcpconn->proto.tcp)
@@ -19,8 +15,7 @@ _easyq_tcpconn_delete(EasyQSession *eq)
 
 
 LOCAL void ICACHE_FLASH_ATTR
-_easyq_delete(EasyQSession *eq)
-{
+_easyq_delete(EasyQSession *eq) {
 	_easyq_tcpconn_delete(eq);
     os_free(eq->hostname);
 }
@@ -34,9 +29,7 @@ _easyq_disconnect(EasyQSession *eq) {
 
 
 LOCAL void ICACHE_FLASH_ATTR
-_easyq_tcpclient_disconnect_cb(void *arg)
-{
-
+_easyq_tcpclient_disconnect_cb(void *arg) {
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
 
@@ -62,8 +55,7 @@ _easyq_tcpclient_disconnect_cb(void *arg)
 
 
 void ICACHE_FLASH_ATTR
-_easyq_tcpclient_recon_cb(void *arg, sint8 errType)
-{
+_easyq_tcpclient_recon_cb(void *arg, sint8 errType) {
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
 	_easyq_tcpconn_delete(eq);
@@ -75,8 +67,7 @@ _easyq_tcpclient_recon_cb(void *arg, sint8 errType)
 
 
 void ICACHE_FLASH_ATTR
-_easyq_tcpclient_connect_cb(void *arg)
-{
+_easyq_tcpclient_connect_cb(void *arg) {
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
 	eq->status = EASYQ_CONNECTED;
@@ -89,8 +80,7 @@ _easyq_tcpclient_connect_cb(void *arg)
 
 
 LOCAL void ICACHE_FLASH_ATTR
-_easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
-{
+_easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg) {
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
 
@@ -116,8 +106,9 @@ _easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
     }
 }
 
-void ICACHE_FLASH_ATTR _easyq_timer(void *arg)
-{
+
+void ICACHE_FLASH_ATTR 
+_easyq_timer(void *arg) {
     EasyQSession *eq = (EasyQSession*)arg;
 	eq->ticks++;
 	INFO("Timer tick: %lu\r\n", eq->ticks);

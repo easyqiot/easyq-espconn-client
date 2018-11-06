@@ -4,6 +4,9 @@
 // Internal
 #include "_easyq.c"
 
+os_event_t easyq_task_queue[EASYQ_TASK_QUEUE_SIZE];
+
+
 /* State Machine
  
 +------------+-----------+------------+--------+-----------+--+
