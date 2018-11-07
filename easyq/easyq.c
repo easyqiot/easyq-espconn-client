@@ -41,7 +41,7 @@ _easyq_tcpclient_disconnect_cb(void *arg) {
 		eq->ondisconnect(eq);
 	}
 
-	if(EASYQ_DELETE == eq->status) {
+	if (EASYQ_DELETE == eq->status) {
 		_easyq_delete(eq);
 		return;
     }
@@ -69,18 +69,12 @@ _easyq_reconnect(EasyQSession *eq) {
 
 EasyQError ICACHE_FLASH_ATTR
 _easyq_send_buffer(EasyQSession *eq) { 
-	char data[eq->sendbuffer_length+1];
-	os_strncpy(data, eq->send_buffer, eq->sendbuffer_length);
-	data[eq->sendbuffer_length] = 0;
-	INFO("SEND: %s\r\n", data);
-
 	int8_t err = espconn_send(eq->tcpconn, eq->send_buffer, 
 			eq->sendbuffer_length);
 	if (err != ESPCONN_OK) {
 		ERROR("TCP SEND ERROR: %d\r\n", err);
 		return EASYQ_ERR_TCP_SEND;
 	}
-	eq->status = EASYQ_CONNECTED;
 	return EASYQ_OK;
 }
 
@@ -91,7 +85,6 @@ _easyq_logged_in(EasyQSession *eq, char *session_id, uint8_t id_len) {
 	eq->status = EASYQ_CONNECTED;
     system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
 }
-
 
 
 /* START espconn callbacks */
@@ -113,14 +106,25 @@ _easyq_tcpclient_recv_cb(void *arg, char *pdata, unsigned short len) {
 	if (pdata[len-1] == '\n') {
 		len--;
 	}
+
+	if (pdata[len-1] != ';') {
+		ERROR("EASYQ: INVALID MESSAGE\r\n");
+		return;
+	}
+	len--;
+	eq->recv_buffer[len] = 0;
+
 	os_memcpy(eq->recv_buffer, pdata, len);
 	eq->recvbuffer_length = len;
-	INFO("EASYQ MSG: %s\r\n", pdata, len);
 	
-	if(strncmp(eq->recv_buffer, "HI ", 3) == 0) {
+	if(os_strncmp(eq->recv_buffer, "HI ", 3) == 0) {
 		// Logged In
-		_easyq_logged_in(eq, eq->recv_buffer + 3, len - 4);
-		//_easyq_reconnect(eq);
+		_easyq_logged_in(eq, eq->recv_buffer + 3, len - 3);
+	} 
+	else {
+		// Message received
+		eq->status = EASYQ_MESSAGE;
+		system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
 	}
 }
 
@@ -172,7 +176,7 @@ void ICACHE_FLASH_ATTR
 _easyq_timer(void *arg) {
     EasyQSession *eq = (EasyQSession*)arg;
 	eq->ticks++;
-	INFO(".", eq->ticks);
+//	INFO(".", eq->ticks);
 //	if (eq->ticks % 10 == 0) {
 //		system_print_meminfo();
 //	}
@@ -209,6 +213,27 @@ _easyq_connect(EasyQSession *eq) {
     }
 }
 
+
+LOCAL void ICACHE_FLASH_ATTR 
+_easyq_process_message(EasyQSession *eq) {
+	if (eq->recvbuffer_length < 16 || 
+			os_strncmp(eq->recv_buffer, "MESSAGE ", 8) != 0) {
+        return;
+    }
+
+    char *queue = strrchr(eq->recv_buffer, ' ');
+    if (queue == NULL) {
+        return;
+    }
+	queue++;
+	char *message = eq->recv_buffer + 8;
+	message[(int)(queue - message - 6)] = 0;
+	if (eq->onmessage) {
+		eq->onmessage(eq, queue, message);
+	}
+}
+
+
 os_event_t easyq_task_queue[EASYQ_TASK_QUEUE_SIZE];
 
 
@@ -234,7 +259,7 @@ https://ozh.github.io/ascii-tables/
 | DELETE     | ERR       | ERR        | ERR    | ERR       |
 | RECONNECT  | CONNECTED | IDLE       | ERR    | ERR       |
 +------------+-----------+------------+--------+-----------+
-
+TODO: Needs to be iimplemented.
 */
 LOCAL EasyQError ICACHE_FLASH_ATTR
 _easyq_validate_transition(EasyQStatus state, EasyQStatus command) {
@@ -273,29 +298,28 @@ easyq_task(os_event_t *e)
     EasyQSession* eq = (EasyQSession*)e->par;
     switch (eq->status) {
 	case EASYQ_IDLE:
-		INFO("EasyQ: IDLE\r\n");
 		break;
     case EASYQ_CONNECT:
-		INFO("EASYQ: Trying connect to %s:%d\r\n", eq->hostname, eq->port);
 		_easyq_connect(eq);
         break;
     case EASYQ_RECONNECT:
 		break;
 	case EASYQ_CONNECTED:
-		INFO("TASK: CONNECTED\r\n");
 		if (eq->onconnect) {
 			eq->onconnect(eq);
 		}
 		break;
     case EASYQ_DISCONNECT:
     case EASYQ_DELETE:
-		INFO("EASYQ: deleting %s:%d\r\n", eq->hostname, eq->port);
 		_easyq_disconnect(eq);
 		break;
 	case EASYQ_SEND:
-		INFO("TASK: SENDING\r\n");
 		_easyq_send_buffer(eq);
 		break;
+	case EASYQ_MESSAGE:
+		_easyq_process_message(eq);
+		break;
+
     }
 }
 
@@ -357,7 +381,6 @@ easyq_init(EasyQSession *eq, const char *hostname, uint16_t port,
 	eq->port = port;
 	eq->ticks = 0;
 	eq->status = EASYQ_IDLE;
-	INFO("Preparing EasyQ Server: %s:%d\r\n", hostname, port);
     system_os_task(easyq_task, EASYQ_TASK_PRIO, easyq_task_queue, 
 			EASYQ_TASK_QUEUE_SIZE);
     system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
@@ -373,7 +396,6 @@ easyq_delete(EasyQSession *eq) {
 	if (err != EASYQ_OK) {
 		return err;
 	}
-	INFO("Deleting EasyQ\r\n");
 	eq->status = EASYQ_DELETE;
     system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
 	// TODO: delete task
@@ -383,7 +405,6 @@ easyq_delete(EasyQSession *eq) {
 
 void ICACHE_FLASH_ATTR
 easyq_pull(EasyQSession *eq, const char *queue) { 
-	INFO("EASYQ: PULL FROM: %s\r\n", queue);
 	size_t qlen = os_strlen(queue);
 	os_sprintf(eq->send_buffer, "PULL FROM %s;\n", queue);
 	eq->sendbuffer_length = 13 + qlen;

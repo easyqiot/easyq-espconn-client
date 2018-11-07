@@ -23,6 +23,7 @@ typedef enum {
 	EASYQ_DELETE,
 	EASYQ_RECONNECT,
 	EASYQ_SEND,
+	EASYQ_MESSAGE,
 } EasyQStatus;
 
 
@@ -38,8 +39,8 @@ typedef enum {
 } EasyQError;	
 
 
-typedef void (*EasyQCallback)(void *eq);
-
+typedef void (*EasyQCallback)(void *);
+typedef void (*EasyQMessageCallback)(void*, char*, char*);
 
 typedef struct easy_session {
 	struct espconn *tcpconn;
@@ -53,6 +54,7 @@ typedef struct easy_session {
 	EasyQCallback onconnect;
 	EasyQCallback ondisconnect;
 	EasyQCallback onconnectionerror;
+	EasyQMessageCallback onmessage;
 	char * send_buffer;
 	size_t sendbuffer_length;
 	char * recv_buffer;

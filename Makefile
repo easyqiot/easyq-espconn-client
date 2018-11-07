@@ -126,7 +126,7 @@ sinclude $(PDIR)Makefile
 
 .PHONY: flash
 
-ESPTOOL = esptool.py --baud 115200 write_flash --flash_size 8m --flash_mode qio --flash_freq 40m
+ESPTOOL = esptool.py --baud 1152000 write_flash --flash_size 8m --flash_mode qio --flash_freq 40m
 flash:
 	 $(ESPTOOL) \
 		0x0 	../bin/boot_v1.6.bin \

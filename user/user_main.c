@@ -18,6 +18,14 @@
 EasyQSession eq;
 
 
+void ICACHE_FLASH_ATTR
+easyq_message_cb(void *arg, char *queue, char *msg) {
+	INFO("EASYQ: Message: %s From: %s\r\n", msg, queue);
+	if (strcmp(msg, "mem") == 0) {
+		system_print_meminfo();
+	}
+}
+
 
 void ICACHE_FLASH_ATTR
 easyq_connect_cb(void *arg) {
@@ -67,6 +75,7 @@ void user_init(void)
     eq.onconnect = easyq_connect_cb;
     eq.ondisconnect = easyq_disconnect_cb;
 	eq.onconnectionerror = easyq_connection_error_cb;
+	eq.onmessage = easyq_message_cb;
 
     WIFI_Connect(WIFI_SSID, WIFI_PSK, wifi_connect_cb);
     INFO("System started ...\r\n");
