@@ -78,5 +78,11 @@ easyq_delete(EasyQSession *eq);
 void ICACHE_FLASH_ATTR
 easyq_pull(EasyQSession *eq, const char *queue);
 
+void ICACHE_FLASH_ATTR
+easyq_ignore(EasyQSession *eq, const char *queue);
+
+void ICACHE_FLASH_ATTR
+easyq_push(EasyQSession *eq, const char *queue, const char *message);
+
 #endif
 

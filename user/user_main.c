@@ -16,6 +16,15 @@
 
 
 EasyQSession eq;
+ETSTimer status_timer;
+
+
+void ICACHE_FLASH_ATTR
+status_timer_func() {
+	char str[20];
+	os_sprintf(str, "VDD: %u", system_get_vdd33());
+	easyq_push(&eq, STATUS_QUEUE, str);
+}
 
 
 void ICACHE_FLASH_ATTR
@@ -30,13 +39,18 @@ easyq_message_cb(void *arg, char *queue, char *msg) {
 void ICACHE_FLASH_ATTR
 easyq_connect_cb(void *arg) {
 	INFO("EASYQ: Connected to %s:%d\r\n", eq.hostname, eq.port);
-	easyq_pull(&eq, "q");
+	easyq_pull(&eq, COMMAND_QUEUE);
+
+    os_timer_disarm(&status_timer);
+    os_timer_setfn(&status_timer, (os_timer_func_t *)status_timer_func, NULL);
+    os_timer_arm(&status_timer, 5000, 1);
 }
 
 
 void ICACHE_FLASH_ATTR
 easyq_connection_error_cb(void *arg) {
 	EasyQSession *e = (EasyQSession*) arg;
+    os_timer_disarm(&status_timer);
 	INFO("EASYQ: Connection error: %s:%d\r\n", e->hostname, e->port);
 	INFO("EASYQ: Reconnecting to %s:%d\r\n", e->hostname, e->port);
 }
@@ -45,6 +59,7 @@ easyq_connection_error_cb(void *arg) {
 void easyq_disconnect_cb(void *arg)
 {
 	EasyQSession *e = (EasyQSession*) arg;
+    os_timer_disarm(&status_timer);
 	INFO("EASYQ: Disconnected from %s:%d\r\n", e->hostname, e->port);
 }
 

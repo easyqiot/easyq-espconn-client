@@ -176,10 +176,10 @@ void ICACHE_FLASH_ATTR
 _easyq_timer(void *arg) {
     EasyQSession *eq = (EasyQSession*)arg;
 	eq->ticks++;
-//	INFO(".", eq->ticks);
-//	if (eq->ticks % 10 == 0) {
-//		system_print_meminfo();
-//	}
+	INFO(".", eq->ticks);
+	if (eq->ticks % 10 == 0) {
+		INFO("\r\nFree Heap: %lu\r\n", system_get_free_heap_size());
+	}	
 	if (eq->status == EASYQ_RECONNECT) {
 		eq->status = EASYQ_CONNECT;
 		system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
@@ -259,7 +259,7 @@ https://ozh.github.io/ascii-tables/
 | DELETE     | ERR       | ERR        | ERR    | ERR       |
 | RECONNECT  | CONNECTED | IDLE       | ERR    | ERR       |
 +------------+-----------+------------+--------+-----------+
-TODO: Needs to be iimplemented.
+TODO: Needs to be implemented.
 */
 LOCAL EasyQError ICACHE_FLASH_ATTR
 _easyq_validate_transition(EasyQStatus state, EasyQStatus command) {
@@ -398,7 +398,6 @@ easyq_delete(EasyQSession *eq) {
 	}
 	eq->status = EASYQ_DELETE;
     system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
-	// TODO: delete task
 	return EASYQ_OK;
 }
 
@@ -411,4 +410,26 @@ easyq_pull(EasyQSession *eq, const char *queue) {
 	eq->status = EASYQ_SEND;
 	system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
 }
+
+
+void ICACHE_FLASH_ATTR
+easyq_ignore(EasyQSession *eq, const char *queue) {
+	size_t qlen = os_strlen(queue);
+	os_sprintf(eq->send_buffer, "IGNORE %s;\n", queue);
+	eq->sendbuffer_length = 9 + qlen;
+	eq->status = EASYQ_SEND;
+	system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
+}
+
+
+void ICACHE_FLASH_ATTR
+easyq_push(EasyQSession *eq, const char *queue, const char *message) {
+	size_t qlen = os_strlen(queue);
+	size_t msglen = os_strlen(message);
+	os_sprintf(eq->send_buffer, "PUSH %s INTO %s;\n", message, queue);
+	eq->sendbuffer_length = 13 + qlen + msglen;
+	eq->status = EASYQ_SEND;
+	system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
+}
+
 
