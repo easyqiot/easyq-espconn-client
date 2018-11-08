@@ -176,10 +176,9 @@ void ICACHE_FLASH_ATTR
 _easyq_timer(void *arg) {
     EasyQSession *eq = (EasyQSession*)arg;
 	eq->ticks++;
-	INFO(".", eq->ticks);
-	if (eq->ticks % 10 == 0) {
-		INFO("\r\nFree Heap: %lu\r\n", system_get_free_heap_size());
-	}	
+	//if (eq->ticks % 10 == 0) {
+	//	INFO("\r\nFree Heap: %lu\r\n", system_get_free_heap_size());
+	//}	
 	if (eq->status == EASYQ_RECONNECT) {
 		eq->status = EASYQ_CONNECT;
 		system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
@@ -199,9 +198,10 @@ _easyq_connect(EasyQSession *eq) {
     espconn_regist_connectcb(eq->tcpconn, _easyq_tcpclient_connect_cb);
     espconn_regist_reconcb(eq->tcpconn, _easyq_tcpclient_recon_cb);
 
+	// TODO: Move it to disconnect and reconect cb
     os_timer_disarm(&eq->timer);
     os_timer_setfn(&eq->timer, (os_timer_func_t *)_easyq_timer, eq);
-    os_timer_arm(&eq->timer, 1000, 1);
+    os_timer_arm(&eq->timer, EASYQ_RECONNECT_INTERVAL, 1);
 
 
     if (UTILS_StrToIP(eq->hostname, &eq->tcpconn->proto.tcp->remote_ip)) {

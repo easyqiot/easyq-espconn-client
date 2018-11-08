@@ -18,11 +18,15 @@
 EasyQSession eq;
 ETSTimer status_timer;
 
+static bool sw2_state;
+
 
 void ICACHE_FLASH_ATTR
 status_timer_func() {
 	char str[20];
-	os_sprintf(str, "VDD: %u", system_get_vdd33());
+	float vdd = system_get_vdd33() / 1024.0;
+
+	os_sprintf(str, "VDD: %d.%03d", (int)vdd, (int)(vdd*1000)%1000);
 	easyq_push(&eq, STATUS_QUEUE, str);
 }
 
@@ -43,7 +47,7 @@ easyq_connect_cb(void *arg) {
 
     os_timer_disarm(&status_timer);
     os_timer_setfn(&status_timer, (os_timer_func_t *)status_timer_func, NULL);
-    os_timer_arm(&status_timer, 5000, 1);
+    os_timer_arm(&status_timer, 1000, 1);
 }
 
 
@@ -78,10 +82,41 @@ void wifi_connect_cb(uint8_t status) {
 }
 
 
+
+void ICACHE_FLASH_ATTR
+sw2_interrupt() {
+	ETS_GPIO_INTR_DISABLE();
+	uint16_t status;
+	
+	// Clear the interrupt
+	status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
+	GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, status);
+
+	bool level = GPIO_INPUT_GET(SW2_NUM);
+	if (level ^ sw2_state) {
+		sw2_state = level;
+		INFO("\r\nSW2: %s\r\n", level? "ON": "OFF"); 
+	}
+
+	os_delay_us(500000);
+	
+	ETS_GPIO_INTR_ENABLE();
+}
+
+
 void user_init(void)
 {
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
     os_delay_us(60000);
+
+	PIN_FUNC_SELECT(SW2_MUX, SW2_FUNC);
+	//PIN_PULLUP_DIS(SW2_MUX);
+	GPIO_DIS_OUTPUT(GPIO_ID_PIN(SW2_NUM));
+	ETS_GPIO_INTR_DISABLE();
+	ETS_GPIO_INTR_ATTACH(sw2_interrupt, NULL);
+	gpio_pin_intr_state_set(GPIO_ID_PIN(SW2_NUM), GPIO_PIN_INTR_ANYEDGE);
+	ETS_GPIO_INTR_ENABLE();
+
 	EasyQError err = easyq_init(&eq, EASYQ_HOSTNAME, EASYQ_PORT, EASYQ_LOGIN);
 	if (err != EASYQ_OK) {
 		ERROR("EASYQ INIT ERROR: %d\r\n", err);
