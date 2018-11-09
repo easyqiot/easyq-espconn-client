@@ -79,6 +79,9 @@ void ICACHE_FLASH_ATTR
 easyq_pull(EasyQSession *eq, const char *queue);
 
 void ICACHE_FLASH_ATTR
+easyq_pull_all(EasyQSession *eq, const char **queue, size_t qlen);
+
+void ICACHE_FLASH_ATTR
 easyq_ignore(EasyQSession *eq, const char *queue);
 
 void ICACHE_FLASH_ATTR

@@ -57,25 +57,26 @@ _easyq_tcpclient_disconnect_cb(void *arg) {
     system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
 }
 
+
 void ICACHE_FLASH_ATTR
 _easyq_reconnect(EasyQSession *eq) { 
 	_easyq_tcpconn_delete(eq);
 	eq->status = EASYQ_RECONNECT;
+	os_delay_us(1000);
 	if (eq->onconnectionerror) {
 		eq->onconnectionerror(eq);
 	}
 }
 
 
-EasyQError ICACHE_FLASH_ATTR
+void ICACHE_FLASH_ATTR
 _easyq_send_buffer(EasyQSession *eq) { 
 	int8_t err = espconn_send(eq->tcpconn, eq->send_buffer, 
 			eq->sendbuffer_length);
 	if (err != ESPCONN_OK) {
-		ERROR("TCP SEND ERROR: %d\r\n", err);
-		return EASYQ_ERR_TCP_SEND;
+		ERROR("TCP SEND ERROR: %d, Retrying\r\n", err);
+		// TODO: reschedule to send data some more times.
 	}
-	return EASYQ_OK;
 }
 
 
@@ -116,7 +117,7 @@ _easyq_tcpclient_recv_cb(void *arg, char *pdata, unsigned short len) {
 
 	os_memcpy(eq->recv_buffer, pdata, len);
 	eq->recvbuffer_length = len;
-	
+	os_delay_us(1000);	
 	if(os_strncmp(eq->recv_buffer, "HI ", 3) == 0) {
 		// Logged In
 		_easyq_logged_in(eq, eq->recv_buffer + 3, len - 3);
@@ -228,6 +229,7 @@ _easyq_process_message(EasyQSession *eq) {
 	queue++;
 	char *message = eq->recv_buffer + 8;
 	message[(int)(queue - message - 6)] = 0;
+	os_delay_us(1000);
 	if (eq->onmessage) {
 		eq->onmessage(eq, queue, message);
 	}
@@ -402,7 +404,7 @@ easyq_delete(EasyQSession *eq) {
 }
 
 
-void ICACHE_FLASH_ATTR
+void ICACHE_FLASH_ATTR 
 easyq_pull(EasyQSession *eq, const char *queue) { 
 	size_t qlen = os_strlen(queue);
 	os_sprintf(eq->send_buffer, "PULL FROM %s;\n", queue);
@@ -410,6 +412,35 @@ easyq_pull(EasyQSession *eq, const char *queue) {
 	eq->status = EASYQ_SEND;
 	system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
 }
+
+
+void ICACHE_FLASH_ATTR 
+easyq_pull_all(EasyQSession *eq, const char **queues, size_t queue_count) { 
+	int i;
+	int len = 0;
+	char temp[32];
+	
+	os_memset(eq->send_buffer, 0, 1024); 
+	for (i = 0; i < queue_count; i++) {
+		INFO("Pulling: %s\r\n", queues[i]);
+		size_t l = os_strlen(queues[i]);
+		if (len+l+12 >= EASYQ_SEND_BUFFER_SIZE) {
+			break;		
+		}
+		os_sprintf(temp, "PULL FROM %s;", queues[i]);
+		os_strcat(eq->send_buffer, temp);
+		len += (12 + l);
+	}
+	eq->send_buffer[len] = '\n';
+
+	eq->send_buffer[len+1] = '\0';
+	INFO("%s\r\n", eq->send_buffer);
+
+	eq->sendbuffer_length = len + 1;
+	eq->status = EASYQ_SEND;
+	system_os_post(EASYQ_TASK_PRIO, 0, (os_param_t)eq);
+}
+
 
 
 void ICACHE_FLASH_ATTR
