@@ -32,7 +32,8 @@ status_timer_func() {
 
 
 void ICACHE_FLASH_ATTR
-easyq_message_cb(void *arg, char *queue, char *msg) {
+easyq_message_cb(void *arg, const char *queue, const char *msg, 
+		uint16_t msglen) {
 	INFO("EASYQ: Message: %s From: %s\r\n", msg, queue);
 	if (strcmp(msg, "mem") == 0) {
 		system_print_meminfo();

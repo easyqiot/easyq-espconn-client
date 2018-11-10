@@ -40,7 +40,7 @@ typedef enum {
 
 
 typedef void (*EasyQCallback)(void *);
-typedef void (*EasyQMessageCallback)(void*, char*, char*);
+typedef void (*EasyQMessageCallback)(void*, const char*, const char*, uint16_t);
 
 typedef struct easy_session {
 	struct espconn *tcpconn;

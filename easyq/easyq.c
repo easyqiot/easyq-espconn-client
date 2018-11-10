@@ -228,10 +228,11 @@ _easyq_process_message(EasyQSession *eq) {
     }
 	queue++;
 	char *message = eq->recv_buffer + 8;
-	message[(int)(queue - message - 6)] = 0;
+	uint16_t message_len = queue - message - 6;
+	message[message_len] = 0;
 	os_delay_us(1000);
 	if (eq->onmessage) {
-		eq->onmessage(eq, queue, message);
+		eq->onmessage(eq, queue, message, message_len);
 	}
 }
 
