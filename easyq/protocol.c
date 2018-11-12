@@ -1,10 +1,11 @@
-#include "protocol.h"
-#include "easyq.h"
-#include "debug.h"
-
+#include <ip_addr.h>
+#include <c_types.h>
 #include <mem.h>
 #include <espconn.h>
 #include <string.h>
+
+#include "easyq.h"
+#include "debug.h"
 
 
 LOCAL void ICACHE_FLASH_ATTR 
@@ -35,8 +36,11 @@ _easyq_proto_process_message(EasyQSession *eq) {
 LOCAL void ICACHE_FLASH_ATTR
 _easyq_proto_logged_in(EasyQSession *eq, char *session_id, uint8_t id_len) { 
 	INFO("Loggen In, session ID: %s\r\n", session_id);
-	_easyq_task_post(eq, EASYQ_SIG_CONNECTED);
 	// TODO: Store session id inside the eq session.
+	EasyQError e = _easyq_task_post(eq, EASYQ_SIG_CONNECTED);
+	if (e) {
+		ERROR("ERROR: %d\r\n", e);
+	}
 }
 
 
@@ -84,7 +88,13 @@ _easyq_proto_send_buffer(EasyQSession *eq) {
 	int8_t err = espconn_send(eq->tcpconn, eq->send_buffer, 
 			eq->sendbuffer_length);
 	if (err != ESPCONN_OK) {
-		ERROR("TCP SEND ERROR: %d, Retrying\r\n", err);
+		if (err == ESPCONN_ARG) {
+			EasyQError e = _easyq_task_post(eq, EASYQ_SIG_RECONNECT);
+			if (e) {
+				ERROR("ERROR: %d\r\n", e);
+			}
+		}
+		ERROR("TCP SEND ERROR: %d\r\n", err);
 		// TODO: use timer to send data some more times.
 	}
 }
@@ -97,7 +107,10 @@ _easyq_tcpclient_sent_cb(void *arg) {
 	
 	// Clear the buffer for future sending.
 	os_memset(eq->send_buffer, 0, EASYQ_SEND_BUFFER_SIZE);
-	_easyq_task_post(eq, EASYQ_SIG_SENT);	
+	EasyQError e = _easyq_task_post(eq, EASYQ_SIG_SENT);
+	if (e) {
+		ERROR("ERROR: %d\r\n", e);
+	}
 }
 
 
@@ -105,7 +118,11 @@ void
 _easyq_tcpclient_connection_error_cb(void *arg, sint8 errType) {
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
-	_easyq_task_post(eq, EASYQ_SIG_RECONNECT);
+	INFO("Connection error\r\n");
+	EasyQError e = _easyq_task_post(eq, EASYQ_SIG_RECONNECT);
+	if (e) {
+		ERROR("ERROR: %d\r\n", e);
+	}
 }
 
 
@@ -113,7 +130,10 @@ void
 _easyq_tcpclient_disconnect_cb(void *arg) {
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
-	_easyq_task_post(eq, EASYQ_SIG_DISCONNECTED);
+	EasyQError e = _easyq_task_post(eq, EASYQ_SIG_DISCONNECTED);
+	if (e) {
+		ERROR("ERROR: %d\r\n", e);
+	}
 }
 
 
@@ -154,7 +174,11 @@ _easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg) {
     {
         ERROR("DNS: Found, but got no ip, try to reconnect\r\n");
 		_easyq_proto_delete(eq);
-		_easyq_task_post(eq, EASYQ_SIG_CONNECT);
+		EasyQError e = _easyq_task_post(eq, EASYQ_SIG_CONNECT);
+		if (e) {
+			ERROR("ERROR: %d\r\n", e);
+		}
+
         return;
     }
 
@@ -191,17 +215,6 @@ _easyq_proto_connect(EasyQSession *eq) {
         espconn_gethostbyname(eq->tcpconn, eq->hostname, &eq->ip, 
 				_easyq_dns_found);
     }
-}
-
-
-void ICACHE_FLASH_ATTR
-_easyq_proto_reconnect(EasyQSession *eq) { 
-	// Giving a chance to users to examine what happened before deleting the
-	// espconn structure.
-	if (eq->onconnectionerror) {
-		eq->onconnectionerror(eq);
-	}
-	_easyq_proto_delete(eq);
 }
 
 

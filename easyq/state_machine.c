@@ -2,7 +2,40 @@
 #include <osapi.h>  
 
 #include "easyq.h"
-#include "protocol.h"
+#include "debug.h"
+
+/* State Machine
+
+
+           +---------+                      +------------+
+           |         +---SIG-CONNECT-------->            |
+           |  Idle   |                      | Connecting |
+     +----->         |                   +--+            |
+     |     +---------+                   |  +---------+--+
+     |                                   |            |
+     |                                   |   CB-CONNECTED
+     |                                   |            |
+     |   +--------------+                V  +---------v--+
+     |   |              <--CB-CONN-ERROR----+            |
+     |   | Reconnecting |                   | Connected  |
+     |   |              +--CB-CONNECTED----->            <-----+
+     |   +--------------+                   +-+-------+--+     |
+     |                                        |       |        |
+  CB-DISCONNECTED                   SIG-DISCONNECT    |        |
+     |                                        |       |    CB-SENT
+     |   +---------------+                    |       |        |
+     +---+               <--------------------+       |        |
+         | Disconnecting |                            |        |
+         |               |                       SIG-SEND      |
+         +---------------+                            |        |
+                                             +--------v--+     |
+                                             |           |     |
+                                             | Sending   +-----+
+                                             |           |
+                                             +-----------+
+
+*/
+
 
 // FIXME: May be static
 os_event_t easyq_task_queue[EASYQ_TASK_QUEUE_SIZE];
@@ -15,7 +48,9 @@ _easyq_timer_cb(void *arg) {
 	//if (eq->ticks % 10 == 0) {
 	//	INFO("\r\nFree Heap: %lu\r\n", system_get_free_heap_size());
 	//}	
+	INFO("Status: %d, Ticks: %d\r\n", eq->status, eq->reconnect_ticks);
 	if (eq->status == EASYQ_RECONNECTING) {
+		INFO("Reconnecting\r\n");
 		_easyq_proto_delete(eq);
 		_easyq_proto_connect(eq);
 	}
@@ -46,7 +81,12 @@ _easyq_task_cb(os_event_t *e)
 
     case EASYQ_SIG_RECONNECT:
 		eq->status = EASYQ_RECONNECTING;
-		_easyq_proto_reconnect(eq);
+		// Giving a chance to users to examine what happened before deleting the
+		// espconn structure.
+		if (eq->onconnectionerror) {
+			eq->onconnectionerror(eq);
+		}
+
 	    os_timer_disarm(&eq->timer);
 	    os_timer_setfn(&eq->timer, (os_timer_func_t *)_easyq_timer_cb, eq);
 	    os_timer_arm(&eq->timer, EASYQ_RECONNECT_INTERVAL, 1);
@@ -103,7 +143,8 @@ _easyq_task_post(EasyQSession *eq, EasyQSignal signal) {
 			break;
 		case EASYQ_CONNECTING:
 			if (signal != EASYQ_SIG_CONNECTED && 
-					signal != EASYQ_SIG_DISCONNECT) {
+					signal != EASYQ_SIG_DISCONNECT &&
+					signal != EASYQ_SIG_RECONNECT) {
 				return EASYQ_ERR_ALREADY_CONNECTING;
 			}
 			break;
@@ -125,7 +166,7 @@ _easyq_task_post(EasyQSession *eq, EasyQSignal signal) {
 			}
 			break;
 		case EASYQ_SENDING:
-			if (signal != EASYQ_SIG_SENT) {
+			if (signal != EASYQ_SIG_SENT && signal != EASYQ_SIG_RECONNECT) {
 				return EASYQ_ERR_ALREADY_SENDING;
 			}
 			break;

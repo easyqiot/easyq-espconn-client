@@ -1,10 +1,7 @@
 #include <mem.h>
-//#include "espconn.h"
-//#include "c_types.h"
 
 #include "easyq.h"
 #include "debug.h"
-//#include "utils.h"  
 
 
 /* Schedules a connect request 
@@ -99,8 +96,6 @@ easyq_pull_all(EasyQSession *eq, const char **queues, size_t queue_count) {
 	}
 	eq->send_buffer[len] = '\n';
 	eq->send_buffer[len+1] = '\0';
-	INFO("%s\r\n", eq->send_buffer);
-
 	eq->sendbuffer_length = len + 1;
 	return _easyq_task_post(eq, EASYQ_SIG_SEND);
 }
