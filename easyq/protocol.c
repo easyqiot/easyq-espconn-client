@@ -11,8 +11,8 @@ LOCAL void ICACHE_FLASH_ATTR
 _easyq_proto_process_message(EasyQSession *eq) {
 	if (eq->recvbuffer_length < 16 || 
 			os_strncmp(eq->recv_buffer, "MESSAGE ", 8) != 0) {
-		ERROR("Invalid message length: %d or format \r\n", 
-				eq->recvbuffer_length);
+		ERROR("Invalid message length: %d or format: %s \r\n", 
+				eq->recvbuffer_length, eq->recv_buffer);
         return;
     }
 
@@ -32,10 +32,17 @@ _easyq_proto_process_message(EasyQSession *eq) {
 
 
 
-void ICACHE_FLASH_ATTR
+LOCAL void ICACHE_FLASH_ATTR
 _easyq_proto_logged_in(EasyQSession *eq, char *session_id, uint8_t id_len) { 
+	INFO("Loggen In, session ID: %s\r\n", session_id);
 	_easyq_task_post(eq, EASYQ_SIG_CONNECTED);
 	// TODO: Store session id inside the eq session.
+}
+
+
+LOCAL void ICACHE_FLASH_ATTR
+_easyq_proto_server_error(EasyQSession *eq, char *error, uint8_t error_len) { 
+	INFO("SERVER ERROR: %s\r\n", error);
 }
 
 
@@ -61,6 +68,10 @@ _easyq_tcpclient_recv_cb(void *arg, char *pdata, unsigned short len) {
 		// Logged In
 		_easyq_proto_logged_in(eq, eq->recv_buffer + 3, len - 3);
 	} 
+	else if(os_strncmp(eq->recv_buffer, "ERROR: ", 7) == 0) {
+		// Server Error 
+		_easyq_proto_server_error(eq, eq->recv_buffer + 7, len - 7);
+	} 
 	else {
 		// Message received
 		_easyq_proto_process_message(eq);
@@ -73,7 +84,6 @@ _easyq_proto_send_buffer(EasyQSession *eq) {
 	int8_t err = espconn_send(eq->tcpconn, eq->send_buffer, 
 			eq->sendbuffer_length);
 	if (err != ESPCONN_OK) {
-		_easyq_task_post(eq, EASYQ_SIG_SEND);
 		ERROR("TCP SEND ERROR: %d, Retrying\r\n", err);
 		// TODO: use timer to send data some more times.
 	}
@@ -84,19 +94,22 @@ void
 _easyq_tcpclient_sent_cb(void *arg) {
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
+	
+	// Clear the buffer for future sending.
+	os_memset(eq->send_buffer, 0, EASYQ_SEND_BUFFER_SIZE);
 	_easyq_task_post(eq, EASYQ_SIG_SENT);	
 }
 
 
-void ICACHE_FLASH_ATTR
-_easyq_tcpclient_recon_cb(void *arg, sint8 errType) {
+void 
+_easyq_tcpclient_connection_error_cb(void *arg, sint8 errType) {
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
 	_easyq_task_post(eq, EASYQ_SIG_RECONNECT);
 }
 
 
-void ICACHE_FLASH_ATTR
+void
 _easyq_tcpclient_disconnect_cb(void *arg) {
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
@@ -104,7 +117,7 @@ _easyq_tcpclient_disconnect_cb(void *arg) {
 }
 
 
-void ICACHE_FLASH_ATTR
+void
 _easyq_tcpclient_connect_cb(void *arg) {
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
@@ -112,6 +125,7 @@ _easyq_tcpclient_connect_cb(void *arg) {
 	espconn_regist_sentcb(eq->tcpconn, _easyq_tcpclient_sent_cb);
 	espconn_regist_disconcb(eq->tcpconn, _easyq_tcpclient_disconnect_cb);
 	
+	os_memset(eq->send_buffer, 0, EASYQ_SEND_BUFFER_SIZE);
 	eq->sendbuffer_length = os_strlen(eq->login) + 8;
 	os_snprintf(eq->send_buffer, eq->sendbuffer_length, 
 			"LOGIN %s;\n", eq->login);
@@ -168,7 +182,7 @@ _easyq_proto_connect(EasyQSession *eq) {
     eq->tcpconn->proto.tcp->remote_port = eq->port;
     eq->tcpconn->reverse = eq; 
     espconn_regist_connectcb(eq->tcpconn, _easyq_tcpclient_connect_cb);
-    espconn_regist_reconcb(eq->tcpconn, _easyq_tcpclient_recon_cb);
+    espconn_regist_reconcb(eq->tcpconn, _easyq_tcpclient_connection_error_cb);
 
     if (UTILS_StrToIP(eq->hostname, &eq->tcpconn->proto.tcp->remote_ip)) {
         espconn_connect(eq->tcpconn);
@@ -182,10 +196,12 @@ _easyq_proto_connect(EasyQSession *eq) {
 
 void ICACHE_FLASH_ATTR
 _easyq_proto_reconnect(EasyQSession *eq) { 
-	_easyq_proto_delete(eq);
+	// Giving a chance to users to examine what happened before deleting the
+	// espconn structure.
 	if (eq->onconnectionerror) {
 		eq->onconnectionerror(eq);
 	}
+	_easyq_proto_delete(eq);
 }
 
 
@@ -193,54 +209,4 @@ void ICACHE_FLASH_ATTR
 _easyq_proto_disconnect(EasyQSession *eq) {
     espconn_disconnect(eq->tcpconn);
 }
-
-
-//
-///* Local */
-//
-//
-//LOCAL void ICACHE_FLASH_ATTR
-//_easyq_delete(EasyQSession *eq) {
-//	_easyq_tcpconn_delete(eq);
-//    os_free(eq->hostname);
-//    os_free(eq->login);
-//    os_free(eq->send_buffer);
-//    os_free(eq->recv_buffer);
-//}
-//
-//
-//
-
-//
-//
-//
-//void ICACHE_FLASH_ATTR
-//_easyq_send_buffer(EasyQSession *eq) { 
-//	int8_t err = espconn_send(eq->tcpconn, eq->send_buffer, 
-//			eq->sendbuffer_length);
-//	if (err != ESPCONN_OK) {
-//		ERROR("TCP SEND ERROR: %d, Retrying\r\n", err);
-//		// TODO: reschedule to send data some more times.
-//	}
-//}
-//
-//
-//
-///* START espconn callbacks */
-//
-//
-//
-//
-//
-//
-//
-//
-///* END espconn callbacks */
-//
-//
-//
-//
-
-//
-//
 

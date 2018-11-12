@@ -27,14 +27,12 @@ typedef enum {
 } EasyQSignal;
 
 typedef enum {
-	EASYQ_IDLE = 0,
-	EASYQ_CONNECTING,
-	EASYQ_CONNECTED,  // TODO: Rename it to READY
-	EASYQ_DISCONNECTING,
-	EASYQ_RECONNECT,
-	EASYQ_RECONNECTING,
-	EASYQ_SENDING,
-	EASYQ_DELETE,
+	EASYQ_IDLE,				// 0
+	EASYQ_CONNECTING,		// 1
+	EASYQ_DISCONNECTING,	// 2
+	EASYQ_RECONNECTING,		// 3
+	EASYQ_SENDING,			// 4
+	EASYQ_CONNECTED,		// 5 TODO: Rename it to READY
 } EasyQStatus;
 
 
@@ -63,7 +61,7 @@ typedef struct easy_session {
 	EasyQStatus status;
 	ip_addr_t ip;
 	ETSTimer timer; // TODO: rename it to reconnect_timer
-	uint64_t ticks;
+	uint64_t reconnect_ticks;
 	EasyQCallback onconnect;
 	EasyQCallback ondisconnect;
 	EasyQCallback onconnectionerror;
@@ -85,23 +83,23 @@ EasyQError ICACHE_FLASH_ATTR
 easyq_init(EasyQSession *eq, const char *hostname, uint16_t port, 
 		const char *login);
 
-//EasyQError ICACHE_FLASH_ATTR 
-//easyq_delete(EasyQSession *eq);
-//
+EasyQError ICACHE_FLASH_ATTR 
+easyq_delete(EasyQSession *eq);
+
 //EasyQError ICACHE_FLASH_ATTR
 //easyq_wait_for_send(EasyQSession *eq, uint8_t tries) {
-//
-//EasyQError ICACHE_FLASH_ATTR
-//easyq_pull(EasyQSession *eq, const char *queue);
-//
-//EasyQError ICACHE_FLASH_ATTR
-//easyq_pull_all(EasyQSession *eq, const char **queue, size_t qlen);
-//
-//EasyQError ICACHE_FLASH_ATTR
-//easyq_ignore(EasyQSession *eq, const char *queue);
-//
-//EasyQError ICACHE_FLASH_ATTR
-//easyq_push(EasyQSession *eq, const char *queue, const char *message);
+
+EasyQError ICACHE_FLASH_ATTR
+easyq_pull(EasyQSession *eq, const char *queue);
+
+EasyQError ICACHE_FLASH_ATTR
+easyq_pull_all(EasyQSession *eq, const char **queue, size_t qlen);
+
+EasyQError ICACHE_FLASH_ATTR
+easyq_ignore(EasyQSession *eq, const char *queue);
+
+EasyQError ICACHE_FLASH_ATTR
+easyq_push(EasyQSession *eq, const char *queue, const char *message);
 
 #endif
 
