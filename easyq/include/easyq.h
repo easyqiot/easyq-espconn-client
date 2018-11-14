@@ -6,11 +6,29 @@
 #include "ip_addr.h"
 
 
+#ifndef EASYQ_TASK_QUEUE_SIZE
 #define EASYQ_TASK_QUEUE_SIZE	1
+#endif
+
+
+#ifndef EASYQ_TASK_PRIO
 #define EASYQ_TASK_PRIO			2
-#define EASYQ_RECV_BUFFER_SIZE  1024
-#define EASYQ_SEND_BUFFER_SIZE  1024
+#endif
+
+
+#ifndef EASYQ_RECONNECT_INTERVAL
 #define EASYQ_RECONNECT_INTERVAL	2000
+#endif
+
+
+#ifndef EASYQ_RECV_BUFFER_SIZE
+#define EASYQ_RECV_BUFFER_SIZE  1024
+#endif
+
+
+#ifndef EASYQ_SEND_BUFFER_SIZE 
+#define EASYQ_SEND_BUFFER_SIZE  1024
+#endif
 
 
 typedef enum {
