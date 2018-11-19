@@ -147,7 +147,7 @@ _easyq_tcpclient_connect_cb(void *arg) {
 	
 	os_memset(eq->send_buffer, 0, EASYQ_SEND_BUFFER_SIZE);
 	eq->sendbuffer_length = os_strlen(eq->login) + 8;
-	os_snprintf(eq->send_buffer, eq->sendbuffer_length, 
+	ets_snprintf(eq->send_buffer, eq->sendbuffer_length, 
 			"LOGIN %s;\n", eq->login);
 	_easyq_proto_send_buffer(eq);
 }
