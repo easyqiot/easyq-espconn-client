@@ -60,7 +60,7 @@ _easyq_tcpclient_recv_cb(void *arg, char *pdata, unsigned short len) {
 	}
 
 	if (pdata[len-1] != ';') {
-		ERROR("EASYQ: INVALID MESSAGE\r\n");
+		ERROR("EASYQ: INVALID MESSAGE: %s\r\n", pdata);
 		return;
 	}
 	len--;
