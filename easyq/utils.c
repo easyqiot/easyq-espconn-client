@@ -7,8 +7,7 @@
 #include <c_types.h>
 
 
-uint8_t ICACHE_FLASH_ATTR UTILS_IsIPV4 (int8_t *str)
-{
+uint8_t ICACHE_FLASH_ATTR UTILS_IsIPV4 (int8_t *str) {
 	uint8_t segs = 0;   /* Segment count. */
 	uint8_t chcnt = 0;  /* Character count within segment. */
 	uint8_t accum = 0;  /* Accumulator for segment. */
@@ -57,8 +56,8 @@ uint8_t ICACHE_FLASH_ATTR UTILS_IsIPV4 (int8_t *str)
 
     return 1;
 }
-uint8_t ICACHE_FLASH_ATTR UTILS_StrToIP(const int8_t* str, void *ip)
-{
+
+uint8_t ICACHE_FLASH_ATTR UTILS_StrToIP(const int8_t* str, void *ip) {
 
 	    /* The count of the number of bytes processed. */
 	    int i;
@@ -96,6 +95,7 @@ uint8_t ICACHE_FLASH_ATTR UTILS_StrToIP(const int8_t* str, void *ip)
 	    return 1;
 
 }
+
 uint32_t ICACHE_FLASH_ATTR UTILS_Atoh(const int8_t *s)
 {
 	uint32_t value = 0, digit;

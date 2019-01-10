@@ -3,23 +3,23 @@
 #include <mem.h>
 #include <espconn.h>
 #include <string.h>
+#include <osapi.h>
 
 #include "easyq.h"
-#include "debug.h"
 
 
 LOCAL void ICACHE_FLASH_ATTR 
 _easyq_proto_process_message(EasyQSession *eq) {
 	if (eq->recvbuffer_length < 16 || 
 			os_strncmp(eq->recv_buffer, "MESSAGE ", 8) != 0) {
-		ERROR("Invalid message length: %d or format: %s \r\n", 
+		os_printf("Invalid message length: %d or format: %s \r\n", 
 				eq->recvbuffer_length, eq->recv_buffer);
         return;
     }
 
     char *queue = strrchr(eq->recv_buffer, ' ');
     if (queue == NULL) {
-		ERROR("Invalid queue\r\n");
+		os_printf("Invalid queue\r\n");
 		return;
     }
 	queue++;
@@ -35,18 +35,18 @@ _easyq_proto_process_message(EasyQSession *eq) {
 
 LOCAL void ICACHE_FLASH_ATTR
 _easyq_proto_logged_in(EasyQSession *eq, char *session_id, uint8_t id_len) { 
-	INFO("Loggen In, session ID: %s\r\n", session_id);
+	os_printf("Loggen In, session ID: %s\r\n", session_id);
 	// TODO: Store session id inside the eq session.
 	EasyQError e = _easyq_task_post(eq, EASYQ_SIG_CONNECTED);
 	if (e) {
-		ERROR("ERROR: %d\r\n", e);
+		os_printf("ERROR: %d\r\n", e);
 	}
 }
 
 
 LOCAL void ICACHE_FLASH_ATTR
 _easyq_proto_server_error(EasyQSession *eq, char *error, uint8_t error_len) { 
-	INFO("SERVER ERROR: %s\r\n", error);
+	os_printf("SERVER ERROR: %s\r\n", error);
 }
 
 
@@ -60,7 +60,7 @@ _easyq_tcpclient_recv_cb(void *arg, char *pdata, unsigned short len) {
 	}
 
 	if (pdata[len-1] != ';') {
-		ERROR("EASYQ: INVALID MESSAGE: %s\r\n", pdata);
+		os_printf("EASYQ: INVALID MESSAGE: %s\r\n", pdata);
 		return;
 	}
 	len--;
@@ -91,10 +91,10 @@ _easyq_proto_send_buffer(EasyQSession *eq) {
 		if (err == ESPCONN_ARG) {
 			EasyQError e = _easyq_task_post(eq, EASYQ_SIG_RECONNECT);
 			if (e) {
-				ERROR("Send buffer ERROR: %d\r\n", e);
+				os_printf("Send buffer ERROR: %d\r\n", e);
 			}
 		}
-		ERROR("TCP SEND ERROR: %d\r\n", err);
+		os_printf("TCP SEND ERROR: %d\r\n", err);
 		// TODO: use timer to send data some more times.
 	}
 }
@@ -109,20 +109,22 @@ _easyq_tcpclient_sent_cb(void *arg) {
 	os_memset(eq->send_buffer, 0, EASYQ_SEND_BUFFER_SIZE);
 	EasyQError e = _easyq_task_post(eq, EASYQ_SIG_SENT);
 	if (e) {
-		ERROR("SENT CB, cannot schedule sig sent: %d\r\n", e);
+		os_printf("SENT CB, cannot schedule sig sent: %d\r\n", e);
 	}
 }
 
 
 void 
 _easyq_tcpclient_connection_error_cb(void *arg, sint8 errType) {
+	os_printf("Connection error\r\n");
+#if EASYQ_AUTORECONNECT == 1
     struct espconn *tcpconn = (struct espconn *)arg;
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
-	INFO("Connection error\r\n");
 	EasyQError e = _easyq_task_post(eq, EASYQ_SIG_RECONNECT);
 	if (e) {
-		ERROR("Connection ERROR CB: %d\r\n", e);
+		os_printf("Connection ERROR CB: %d\r\n", e);
 	}
+#endif
 }
 
 
@@ -132,7 +134,7 @@ _easyq_tcpclient_disconnect_cb(void *arg) {
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
 	EasyQError e = _easyq_task_post(eq, EASYQ_SIG_DISCONNECTED);
 	if (e) {
-		ERROR("DIsconnect CB ERROR: %d\r\n", e);
+		os_printf("DIsconnect CB ERROR: %d\r\n", e);
 	}
 }
 
@@ -172,17 +174,17 @@ _easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg) {
 
     if (ipaddr == NULL)
     {
-        ERROR("DNS: Found, but got no ip, try to reconnect\r\n");
+        os_printf("DNS: Found, but got no ip, try to reconnect\r\n");
 		_easyq_proto_delete(eq);
 		EasyQError e = _easyq_task_post(eq, EASYQ_SIG_CONNECT);
 		if (e) {
-			ERROR("Cannot schedule sig connect: %d\r\n", e);
+			os_printf("Cannot schedule sig connect: %d\r\n", e);
 		}
 
         return;
     }
 
-    INFO("DNS: found ip %d.%d.%d.%d\n",
+    os_printf("DNS: found ip %d.%d.%d.%d\n",
          *((uint8 *) &ipaddr->addr),
          *((uint8 *) &ipaddr->addr + 1),
          *((uint8 *) &ipaddr->addr + 2),

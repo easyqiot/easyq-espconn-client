@@ -2,7 +2,6 @@
 #include <osapi.h>  
 
 #include "easyq.h"
-#include "debug.h"
 
 /* State Machine
 
@@ -46,11 +45,11 @@ _easyq_timer_cb(void *arg) {
     EasyQSession *eq = (EasyQSession*)arg;
 	eq->reconnect_ticks++;
 	//if (eq->ticks % 10 == 0) {
-	//	INFO("\r\nFree Heap: %lu\r\n", system_get_free_heap_size());
+	//	os_printf("\r\nFree Heap: %lu\r\n", system_get_free_heap_size());
 	//}	
-	INFO("Status: %d, Ticks: %d\r\n", eq->status, eq->reconnect_ticks);
+	os_printf("Status: %d, Ticks: %d\r\n", eq->status, eq->reconnect_ticks);
 	if (eq->status == EASYQ_RECONNECTING) {
-		INFO("Reconnecting\r\n");
+		os_printf("Reconnecting\r\n");
 		_easyq_proto_delete(eq);
 		_easyq_proto_connect(eq);
 	}
@@ -100,9 +99,16 @@ _easyq_task_cb(os_event_t *e)
 	case EASYQ_SIG_DISCONNECTED:
 		_easyq_proto_delete(eq);
 	    eq->status = EASYQ_IDLE;
+#if EASYQ_AUTORECONNECT == 1
+		EasyQError err = easyq_reconnect(eq);
+	    if (EASYQ_OK != err) {
+			os_printf("Cannot schedule reconnect sig: %d\r\n", err);
+		}
+#else
 		if (eq->ondisconnect) {
 			eq->ondisconnect(eq);
 		}
+#endif
 		break;
 
 	case EASYQ_SIG_SEND:

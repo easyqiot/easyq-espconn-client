@@ -1,7 +1,8 @@
 #include <mem.h>
+#include <osapi.h>
 
 #include "easyq.h"
-#include "debug.h"
+//#include "debug.h"
 
 
 /* Schedules a connect request 
@@ -92,7 +93,7 @@ easyq_pull_all(EasyQSession *eq, const char **queues, size_t queue_count) {
 	char temp[32];
 	
 	for (i = 0; i < queue_count; i++) {
-		INFO("Pulling: %s\r\n", queues[i]);
+		os_printf("Pulling: %s\r\n", queues[i]);
 		size_t l = os_strlen(queues[i]);
 		if (len+l+12 >= EASYQ_SEND_BUFFER_SIZE) {
 			break;		
