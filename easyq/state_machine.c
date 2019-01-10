@@ -122,11 +122,13 @@ _easyq_task_cb(os_event_t *e)
 		// connected.
 		if (eq->status != EASYQ_CONNECTING &&
 				eq->status != EASYQ_RECONNECTING) {
+			os_timer_disarm(&eq->timer);
 			eq->status = EASYQ_CONNECTED;
 		}
 		break;
 
 	case EASYQ_SIG_DELETE:
+	    os_timer_disarm(&eq->timer);
 		_easyq_delete(eq);
 	}
 }

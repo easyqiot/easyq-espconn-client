@@ -12,7 +12,7 @@
 
 
 #ifndef EASYQ_TASK_PRIO
-#define EASYQ_TASK_PRIO			1
+#define EASYQ_TASK_PRIO			2
 #endif
 
 
