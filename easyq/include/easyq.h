@@ -7,12 +7,12 @@
 
 
 #ifndef EASYQ_TASK_QUEUE_SIZE
-#define EASYQ_TASK_QUEUE_SIZE	1
+#define EASYQ_TASK_QUEUE_SIZE	2
 #endif
 
 
 #ifndef EASYQ_TASK_PRIO
-#define EASYQ_TASK_PRIO			2
+#define EASYQ_TASK_PRIO			1
 #endif
 
 
@@ -93,6 +93,9 @@ typedef struct easy_session {
 
 EasyQError ICACHE_FLASH_ATTR 
 easyq_connect(EasyQSession *eq); 
+
+EasyQError ICACHE_FLASH_ATTR 
+easyq_reconnect(EasyQSession *eq); 
 
 EasyQError ICACHE_FLASH_ATTR 
 easyq_disconnect(EasyQSession *eq); 

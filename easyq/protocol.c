@@ -91,7 +91,7 @@ _easyq_proto_send_buffer(EasyQSession *eq) {
 		if (err == ESPCONN_ARG) {
 			EasyQError e = _easyq_task_post(eq, EASYQ_SIG_RECONNECT);
 			if (e) {
-				ERROR("ERROR: %d\r\n", e);
+				ERROR("Send buffer ERROR: %d\r\n", e);
 			}
 		}
 		ERROR("TCP SEND ERROR: %d\r\n", err);
@@ -109,7 +109,7 @@ _easyq_tcpclient_sent_cb(void *arg) {
 	os_memset(eq->send_buffer, 0, EASYQ_SEND_BUFFER_SIZE);
 	EasyQError e = _easyq_task_post(eq, EASYQ_SIG_SENT);
 	if (e) {
-		ERROR("ERROR: %d\r\n", e);
+		ERROR("SENT CB, cannot schedule sig sent: %d\r\n", e);
 	}
 }
 
@@ -121,7 +121,7 @@ _easyq_tcpclient_connection_error_cb(void *arg, sint8 errType) {
 	INFO("Connection error\r\n");
 	EasyQError e = _easyq_task_post(eq, EASYQ_SIG_RECONNECT);
 	if (e) {
-		ERROR("ERROR: %d\r\n", e);
+		ERROR("Connection ERROR CB: %d\r\n", e);
 	}
 }
 
@@ -132,7 +132,7 @@ _easyq_tcpclient_disconnect_cb(void *arg) {
     EasyQSession *eq = (EasyQSession *)tcpconn->reverse;
 	EasyQError e = _easyq_task_post(eq, EASYQ_SIG_DISCONNECTED);
 	if (e) {
-		ERROR("ERROR: %d\r\n", e);
+		ERROR("DIsconnect CB ERROR: %d\r\n", e);
 	}
 }
 
@@ -176,7 +176,7 @@ _easyq_dns_found(const char *name, ip_addr_t *ipaddr, void *arg) {
 		_easyq_proto_delete(eq);
 		EasyQError e = _easyq_task_post(eq, EASYQ_SIG_CONNECT);
 		if (e) {
-			ERROR("ERROR: %d\r\n", e);
+			ERROR("Cannot schedule sig connect: %d\r\n", e);
 		}
 
         return;

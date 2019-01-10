@@ -12,6 +12,13 @@ easyq_connect(EasyQSession *eq) {
 }
 
 
+/* Schedules a reconnect request, a timer will be started
+ */
+EasyQError ICACHE_FLASH_ATTR 
+easyq_reconnect(EasyQSession *eq) {
+	return _easyq_task_post(eq, EASYQ_SIG_RECONNECT);
+}
+
 /* Schedules a disconnect request
  */
 EasyQError ICACHE_FLASH_ATTR 

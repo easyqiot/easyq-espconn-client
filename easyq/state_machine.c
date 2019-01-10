@@ -137,13 +137,16 @@ EasyQError ICACHE_FLASH_ATTR
 _easyq_task_post(EasyQSession *eq, EasyQSignal signal) {
 	switch (eq->status) {
 		case EASYQ_IDLE:
-			if (signal != EASYQ_SIG_CONNECT && signal != EASYQ_SIG_DELETE) {
+			if (signal != EASYQ_SIG_CONNECT && 
+					signal != EASYQ_SIG_DELETE &&
+					signal != EASYQ_SIG_RECONNECT) {
 				return EASYQ_ERR_NOT_CONNECTED;
 			}
 			break;
 		case EASYQ_CONNECTING:
 			if (signal != EASYQ_SIG_CONNECTED && 
 					signal != EASYQ_SIG_DISCONNECT &&
+					signal != EASYQ_SIG_SENT &&
 					signal != EASYQ_SIG_RECONNECT) {
 				return EASYQ_ERR_ALREADY_CONNECTING;
 			}
@@ -151,6 +154,7 @@ _easyq_task_post(EasyQSession *eq, EasyQSignal signal) {
 		case EASYQ_CONNECTED:
 			if (signal != EASYQ_SIG_RECONNECT && 
 					signal != EASYQ_SIG_DISCONNECT &&
+					signal != EASYQ_SIG_DISCONNECTED &&
 					signal != EASYQ_SIG_SEND) {
 				return EASYQ_ERR_ALREADY_CONNECTED;
 			}
