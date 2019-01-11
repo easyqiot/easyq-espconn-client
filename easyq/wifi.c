@@ -57,7 +57,7 @@ void ICACHE_FLASH_ATTR wifi_connect(uint8_t* ssid, uint8_t* pass, WifiCallback c
 
 	INFO("WIFI_INIT\r\n");
 	wifi_set_opmode_current(STATION_MODE);
-	wifi_set_sleep_type(NONE_SLEEP_T);
+	//wifi_set_sleep_type(NONE_SLEEP_T);
 	//wifi_set_sleep_type(MODEM_SLEEP_T);
 	//wifi_set_sleep_type(LIGHT_SLEEP_T);
 	//wifi_station_set_auto_connect(FALSE);
