@@ -56,7 +56,11 @@ void ICACHE_FLASH_ATTR wifi_connect(uint8_t* ssid, uint8_t* pass, WifiCallback c
 	struct station_config stationConf;
 
 	INFO("WIFI_INIT\r\n");
+//#if ENABLE_WIFI_SOFTAP
+//	wifi_set_opmode_current(STATIONAP_MODE);
+//#else
 	wifi_set_opmode_current(STATION_MODE);
+//#endif
 	//wifi_set_sleep_type(NONE_SLEEP_T);
 	//wifi_set_sleep_type(MODEM_SLEEP_T);
 	//wifi_set_sleep_type(LIGHT_SLEEP_T);
